@@ -1,0 +1,119 @@
+[project]
+name = "murkelhausen-app3"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "django>=5.2.6",
+    "django-htmx>=1.25.0",
+]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.13.1",
+    "ty>=0.0.1a21",
+]
+
+[tool.ruff]
+# Django-specific configuration
+target-version = "py313"
+line-length = 88
+exclude = [
+    ".git",
+    ".venv",
+    "__pycache__",
+    "migrations",
+    "venv",
+    "env",
+    ".env",
+    "build",
+    "dist",
+]
+
+[tool.ruff.lint]
+# Enable Django-friendly rules
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # Pyflakes
+    "I",   # isort
+    "N",   # pep8-naming
+    "UP",  # pyupgrade
+    "YTT", # flake8-2020
+    "S",   # flake8-bandit
+    "BLE", # flake8-blind-except
+    "B",   # flake8-bugbear
+    "A",   # flake8-builtins
+    "C4",  # flake8-comprehensions
+    "DJ",  # flake8-django
+    "DTZ", # flake8-datetimez
+    "T10", # flake8-debugger
+    "EM",  # flake8-errmsg
+    "ISC", # flake8-implicit-str-concat
+    "ICN", # flake8-import-conventions
+    "PIE", # flake8-pie
+    "T20", # flake8-print
+    "PT",  # flake8-pytest-style
+    "Q",   # flake8-quotes
+    "RSE", # flake8-raise
+    "RET", # flake8-return
+    "SIM", # flake8-simplify
+    "TID", # flake8-tidy-imports
+    "TCH", # flake8-type-checking
+    "ARG", # flake8-unused-arguments
+    "PTH", # flake8-use-pathlib
+    "ERA", # eradicate
+    "PL",  # Pylint
+    "TRY", # tryceratops
+    "RUF", # Ruff-specific rules
+]
+
+# Ignore specific rules that are common in Django projects
+ignore = [
+    "DJ001",  # null=True on string-based fields
+    "S101",   # Use of assert detected
+    "S311",   # Standard pseudo-random generators are not suitable for security/cryptographic purposes
+    "B008",   # Do not perform function calls in argument defaults
+    "RUF012", # Mutable class attributes should be annotated with `typing.ClassVar`
+    "ISC001", # Conflicts with formatter
+]
+
+# Allow specific violations in specific files
+[tool.ruff.lint.per-file-ignores]
+"settings.py" = ["E501", "F401", "F403"]
+"**/settings/*.py" = ["E501", "F401", "F403"]
+"manage.py" = ["T201"]
+"**/migrations/*.py" = ["E501", "RUF012"]
+
+[tool.ruff.lint.isort]
+# Django-specific isort configuration
+known-first-party = ["core", "family_intranet"]
+known-third-party = ["django"]
+section-order = ["future", "standard-library", "third-party", "first-party", "local-folder"]
+
+[tool.ruff.format]
+# Use double quotes for strings
+quote-style = "double"
+# Indent with spaces
+indent-style = "space"
+# Respect magic trailing commas
+skip-magic-trailing-comma = false
+# Automatically detect line ending
+line-ending = "auto"
+
+[tool.ty]
+# ty type checker configuration
+
+[tool.ty.environment]
+python-version = "3.13"
+
+[tool.ty.src]
+exclude = [
+    "*/migrations/*",
+    "manage.py",
+    ".venv",
+    "__pycache__",
+    "build",
+    "dist",
+]
