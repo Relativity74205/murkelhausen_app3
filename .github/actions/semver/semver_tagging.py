@@ -6,7 +6,7 @@ from enum import StrEnum, auto
 
 from github import Github, Auth, Repository
 
-REPO_NAME = "Relativity74205/murkelhausen_app"
+REPO_NAME = "Relativity74205/murkelhausen_app3"
 
 
 @dataclass
