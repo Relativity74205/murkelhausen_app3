@@ -19,7 +19,7 @@ COPY family_intranet family_intranet
 COPY core core
 COPY entrypoint.sh manage.py pyproject.toml uv.lock* README.md ./
 
-RUN uv sync --locked
+RUN uv sync
 
 ENTRYPOINT ["./entrypoint.sh"]
 
