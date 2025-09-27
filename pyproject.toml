@@ -1,6 +1,6 @@
 [project]
 name = "murkelhausen-app3"
-version = "1.0.1"
+version = "1.0.2"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.13"
@@ -17,7 +17,7 @@ dev = [
 
 [tool.ruff]
 # Django-specific configuration
-target-version = "1.0.1"
+target-version = "1.0.2"
 line-length = 88
 exclude = [
     ".git",
@@ -106,7 +106,7 @@ line-ending = "auto"
 # ty type checker configuration
 
 [tool.ty.environment]
-python-version = "1.0.1"
+python-version = "1.0.2"
 
 [tool.ty.src]
 exclude = [
