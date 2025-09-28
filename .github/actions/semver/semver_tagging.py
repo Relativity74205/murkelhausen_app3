@@ -1,10 +1,10 @@
-import os
 import json
+import os
 from dataclasses import dataclass
 from datetime import datetime
 from enum import StrEnum, auto
 
-from github import Github, Auth, Repository
+from github import Auth, Github, Repository
 
 REPO_NAME = "Relativity74205/murkelhausen_app3"
 

@@ -21,7 +21,7 @@ dev = [
 
 [tool.ruff]
 # Django-specific configuration
-target-version = "1.0.6"
+target-version = "py313"
 line-length = 88
 exclude = [
     ".git",
@@ -33,6 +33,7 @@ exclude = [
     ".env",
     "build",
     "dist",
+    ".github",
 ]
 
 [tool.ruff.lint]
@@ -110,7 +111,7 @@ line-ending = "auto"
 # ty type checker configuration
 
 [tool.ty.environment]
-python-version = "1.0.6"
+python-version = "3.13"
 
 [tool.ty.src]
 exclude = [
