@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
+import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -20,12 +21,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-oj9d3rw)46uf!aermj1#7=e!vndnn(b2qi5547iwwfce5-!tpo"
+SECRET_KEY = os.environ.get("DJANGO__SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = bool(os.environ.get("DJANGO__DEBUG", "False"))
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = os.environ.get("DJANGO__ALLOWED_HOSTS", "127.0.0.1").split(",")
 
 
 # Application definition
@@ -77,11 +78,41 @@ WSGI_APPLICATION = "family_intranet.wsgi.application"
 
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
-    }
+        "ENGINE": "django.db.backends.postgresql",
+        "HOST": "192.168.1.69",
+        "USER": os.environ.get("POSTGRES_USER"),
+        "DBNAME": os.environ.get("POSTGRES_DBNAME"),
+        "PORT": 5432,
+        "PASSWORD": os.environ.get("POSTGRES_PASSWORD"),
+        "TIME_ZONE": "Europe/Berlin",
+        "NAME": os.environ.get("POSTGRES_DBNAME"),
+    },
+    "report": {
+        "ENGINE": "django.db.backends.postgresql",
+        "HOST": "192.168.1.69",
+        "USER": os.environ.get("POSTGRES_USER"),
+        "DBNAME": "murkelhausen_datastore",
+        "OPTIONS": {"options": "-c search_path=report"},
+        "PORT": 5432,
+        "PASSWORD": os.environ.get("POSTGRES_PASSWORD"),
+        "TIME_ZONE": "Europe/Berlin",
+        "NAME": "murkelhausen_datastore",
+    },
+    "data": {
+        "ENGINE": "django.db.backends.postgresql",
+        "HOST": "192.168.1.69",
+        "USER": os.environ.get("POSTGRES_USER"),
+        "DBNAME": "murkelhausen_datastore",
+        "OPTIONS": {"options": "-c search_path=data"},
+        "PORT": 5432,
+        "PASSWORD": os.environ.get("POSTGRES_PASSWORD"),
+        "TIME_ZONE": "Europe/Berlin",
+        "NAME": "murkelhausen_datastore",
+    },
 }
 
+
+DATABASE_ROUTERS = ["murkelhausen_info.routers.MurkelhausenInfoRouter"]
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
@@ -105,7 +136,7 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
 
-LANGUAGE_CODE = "en-us"
+LANGUAGE_CODE = "de-DE"
 
 TIME_ZONE = "UTC"
 
@@ -123,3 +154,47 @@ STATIC_URL = "static/"
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
+OPENWEATHERMAP_API_KEY = os.environ.get("OPENWEATHERMAP_API_KEY")
+PODCASTINDEX_API_KEY = "XMU8WGRYU7PPGSMQ9TQT"
+PODCASTINDEX_API_SECRET = os.environ.get("PODCASTINDEX_API_SECRET")
+PI_HOLE_TOKEN = os.environ.get("PI_HOLE_TOKEN")
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "default": {
+            "format": "{levelname} {asctime} {module} {message}",
+            "style": "{",
+        },
+        "base": {
+            "format": "%(asctime)s [%(levelname)s] %(name)s - %(message)s",
+        },
+        "routes": {
+            "format": "%(asctime)s - %(message)s",
+        },
+    },
+    "handlers": {
+        "base": {
+            "class": "logging.StreamHandler",
+            "formatter": "base",
+        },
+        "routes": {
+            "class": "logging.StreamHandler",
+            "formatter": "routes",
+        },
+    },
+    "loggers": {
+        "django": {
+            "handlers": ["routes"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "root": {
+            "handlers": ["base"],
+            "level": "INFO",
+        },
+    },
+}
