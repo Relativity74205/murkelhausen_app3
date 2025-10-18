@@ -80,21 +80,32 @@
                 <p>{{ error }}</p>
             </div>
         {% else %}
-            <!-- D-Jugend Section -->
-            <section class="mb-5">
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h2 class="team-badge">
-                        <span class="badge bg-primary">D-Jugend</span>
-                    </h2>
-                    <div>
-                        <a href="{{ d_jugend_url }}" target="_blank" class="btn btn-outline-primary btn-sm me-2">
+            <!-- Tabs Navigation -->
+            <ul class="nav nav-tabs mb-4" id="teamTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="d-jugend-tab" data-bs-toggle="tab" data-bs-target="#d-jugend" type="button" role="tab" aria-controls="d-jugend" aria-selected="true">
+                        D-Jugend
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="herren-tab" data-bs-toggle="tab" data-bs-target="#herren" type="button" role="tab" aria-controls="herren" aria-selected="false">
+                        Erste Herren
+                    </button>
+                </li>
+            </ul>
+
+            <!-- Tabs Content -->
+            <div class="tab-content" id="teamTabsContent">
+                <!-- D-Jugend Tab -->
+                <div class="tab-pane fade show active" id="d-jugend" role="tabpanel" aria-labelledby="d-jugend-tab">
+                    <div class="d-flex justify-content-end mb-4">
+                        <a href="{{ d_jugend_url }}" target="_blank" class="btn btn-outline-secondary btn-sm me-2">
                             Mannschaft →
                         </a>
-                        <a href="{{ d_jugend_gruppe_url }}" target="_blank" class="btn btn-outline-primary btn-sm">
+                        <a href="{{ d_jugend_gruppe_url }}" target="_blank" class="btn btn-outline-secondary btn-sm">
                             Tabelle →
                         </a>
                     </div>
-                </div>
 
                 {% if d_jugend_games %}
                     <div class="row g-3">
@@ -149,23 +160,18 @@
                 {% else %}
                     <div class="alert alert-info">Keine Spiele gefunden.</div>
                 {% endif %}
-            </section>
+                </div>
 
-            <!-- Erste Herren Section -->
-            <section class="mb-5">
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h2 class="team-badge">
-                        <span class="badge bg-success">Erste Herren</span>
-                    </h2>
-                    <div>
-                        <a href="{{ erste_herren_url }}" target="_blank" class="btn btn-outline-success btn-sm me-2">
+                <!-- Erste Herren Tab -->
+                <div class="tab-pane fade" id="herren" role="tabpanel" aria-labelledby="herren-tab">
+                    <div class="d-flex justify-content-end mb-4">
+                        <a href="{{ erste_herren_url }}" target="_blank" class="btn btn-outline-secondary btn-sm me-2">
                             Mannschaft →
                         </a>
-                        <a href="{{ erste_herren_gruppe_url }}" target="_blank" class="btn btn-outline-success btn-sm">
+                        <a href="{{ erste_herren_gruppe_url }}" target="_blank" class="btn btn-outline-secondary btn-sm">
                             Tabelle →
                         </a>
                     </div>
-                </div>
 
                 {% if erste_herren_games %}
                     <div class="row g-3">
@@ -220,7 +226,8 @@
                 {% else %}
                     <div class="alert alert-info">Keine Spiele gefunden.</div>
                 {% endif %}
-            </section>
+                </div>
+            </div>
         {% endif %}
     </div>
 
