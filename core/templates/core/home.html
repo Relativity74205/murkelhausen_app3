@@ -49,7 +49,7 @@
                         <a class="nav-link" href="#" hx-get="/calendar" hx-target="#main-content">Calendar</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#" hx-get="/games" hx-target="#main-content">Games</a>
+                        <a class="nav-link" href="{% url 'handball_games' %}">Handball</a>
                     </li>
                 </ul>
             </div>
@@ -106,14 +106,14 @@
                                 <div class="mb-3">
                                     <i class="display-4">⚽</i>
                                 </div>
-                                <h5 class="card-title">Sports Schedule</h5>
+                                <h5 class="card-title">Handball Schedule</h5>
                                 <p class="card-text">
-                                    Automatically scraped football and handball game schedules
-                                    for the kids, with results and upcoming matches.
+                                    Automatically scraped handball game schedules from DJK Saarn
+                                    for D-Jugend and Erste Herren with results and upcoming matches.
                                 </p>
-                                <button class="btn btn-success" hx-get="/games" hx-target="#main-content">
-                                    View Games
-                                </button>
+                                <a href="{% url 'handball_games' %}" class="btn btn-success">
+                                    View Handball Games
+                                </a>
                             </div>
                         </div>
                     </div>

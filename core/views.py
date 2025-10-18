@@ -1,5 +1,37 @@
 from django.shortcuts import render
 
+from family_intranet.repositories.handballnordrhein import (
+    get_d_jugend_gruppe_url,
+    get_d_jugend_url,
+    get_djk_saarn_d_jugend,
+    get_djk_saarn_erste_herren,
+    get_erste_herren,
+    get_erste_herren_gruppe_url,
+)
+
 
 def home(request):
     return render(request, "core/home.html")
+
+
+def handball_games(request):
+    try:
+        d_jugend_games = get_djk_saarn_d_jugend()
+        erste_herren_games = get_djk_saarn_erste_herren()
+        d_jugend_url = get_d_jugend_url()
+        d_jugend_gruppe_url = get_d_jugend_gruppe_url()
+        erste_herren_url = get_erste_herren()
+        erste_herren_gruppe_url = get_erste_herren_gruppe_url()
+
+        context = {
+            "d_jugend_games": d_jugend_games,
+            "erste_herren_games": erste_herren_games,
+            "d_jugend_url": d_jugend_url,
+            "d_jugend_gruppe_url": d_jugend_gruppe_url,
+            "erste_herren_url": erste_herren_url,
+            "erste_herren_gruppe_url": erste_herren_gruppe_url,
+        }
+        return render(request, "core/handball_games.html", context)
+    except (ConnectionError, TimeoutError, ValueError) as e:
+        context = {"error": str(e)}
+        return render(request, "core/handball_games.html", context)

@@ -23,7 +23,6 @@ jobs:
         if: steps.semver.outputs.next_tag != ''
         run: |
           rm semver_result.json  # has to be removed, otherwise git add might cause problems if pyproject.toml and docker-compose.yml is not changed
-          sed -i "s/version = \".*\"/version = \"${{ steps.semver.outputs.next_tag }}\"/g" pyproject.toml
           sed -i "s/^version = \".*\"/version = \"${{ steps.semver.outputs.next_tag }}\"/" pyproject.toml
           sed -i "/image:/ s/:[^:]*$/:${{ steps.semver.outputs.next_tag }}/" docker-compose.yml
           git config --local user.email "foo@bar.com"

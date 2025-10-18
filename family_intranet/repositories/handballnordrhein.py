@@ -1,0 +1,134 @@
+from dataclasses import dataclass
+from datetime import date, datetime
+
+import requests
+from babel.dates import format_date
+from bs4 import BeautifulSoup
+
+TEAM_PORTRAIT_BASE_URL = (
+    "https://hnr-handball.liga.nu/cgi-bin/WebObjects/nuLigaHBDE.woa/wa/teamPortrait"
+)
+GRUPPE_BASE_URL = (
+    "https://hnr-handball.liga.nu/cgi-bin/WebObjects/nuLigaHBDE.woa/wa/groupPage"
+)
+TEAM_D_JUGEND = "2107894"
+GRUPPE_D_JUGEND = "championship=RR+25%2F26&group=445589"
+TEAM_ERSTE_HERREN = "2093179"
+GRUPPE_ERSTE_HERREN = "championship=HNR+25%2F26&group=424203"
+
+
+@dataclass
+class HandballGame:
+    game_date: date | None
+    game_date_formatted: str
+    time: str | None
+    time_original: str | None
+    home_team: str
+    away_team: str
+    location: str
+    result: str | None
+    link_to_spielbericht: str | None
+    spielbericht_genehmigt: bool | None
+    spielfrei: bool | None
+
+
+def _parse_games(html_content: str) -> list[HandballGame]:
+    soup = BeautifulSoup(html_content, "html.parser")
+    content2_div = soup.find("div", {"id": "content-row2"})
+    body = content2_div.find("table", {"class": "result-set"})
+    next_row = body.findNext("tr")
+
+    games = []
+    while (next_row := next_row.findNext("tr")) is not None:
+        parts = next_row.find_all("td")
+        day = parts[0].text.strip()
+
+        # Check if this is a "Termin offen" row or if date is empty/missing
+        game_date_str = parts[1].text.strip() if len(parts) > 1 else ""
+
+        if day == "Termin offen" or not game_date_str:
+            game_date = None
+            game_date_formatted = (
+                "Termin offen" if day == "Termin offen" else "Datum unbekannt"
+            )
+            time = None
+            time_original = None
+            halle = parts[2].text.strip() if len(parts) > 2 else ""
+            home_team = parts[4].text.strip() if len(parts) > 4 else ""
+            away_team = parts[5].text.strip() if len(parts) > 5 else ""
+            result = None
+            link_to_spielbericht = None
+            spielbericht_genehmigt = None
+            spielfrei = True
+        else:
+            time = parts[2].text.strip().split(" ")[0].strip()
+            time_original = parts[2]["alt"] if "alt" in parts[2].attrs else None
+            halle = parts[3].text.strip()
+            home_team = parts[5].text.strip()
+            away_team = parts[6].text.strip()
+            result = parts[7].text.strip()
+            if parts[7].find("a") is not None:
+                link_to_spielbericht = parts[7].find("a")["href"]
+                spielbericht_genehmigt = parts[9].find("img") is not None
+            else:
+                link_to_spielbericht = None
+                spielbericht_genehmigt = None
+
+            game_date = datetime.strptime(game_date_str, "%d.%m.%Y").date()
+            game_date_formatted = format_date(
+                game_date, format="EEE, d.M.yyyy", locale="de_DE"
+            )
+            spielfrei = time == "00:00"
+
+        game = HandballGame(
+            game_date=game_date,
+            game_date_formatted=game_date_formatted,
+            time=time,
+            time_original=time_original,
+            home_team=home_team,
+            away_team=away_team,
+            location=halle,
+            result=result,
+            link_to_spielbericht=link_to_spielbericht,
+            spielbericht_genehmigt=spielbericht_genehmigt,
+            spielfrei=spielfrei,
+        )
+        games.append(game)
+
+    return games
+
+
+def get_d_jugend_url() -> str:
+    return f"{TEAM_PORTRAIT_BASE_URL}?teamtable={TEAM_D_JUGEND}"
+
+
+def get_d_jugend_gruppe_url() -> str:
+    return f"{GRUPPE_BASE_URL}?{GRUPPE_D_JUGEND}"
+
+
+def get_erste_herren() -> str:
+    return f"{TEAM_PORTRAIT_BASE_URL}?teamtable={TEAM_ERSTE_HERREN}"
+
+
+def get_erste_herren_gruppe_url() -> str:
+    return f"{GRUPPE_BASE_URL}?{GRUPPE_ERSTE_HERREN}"
+
+
+def get_djk_saarn_d_jugend() -> list[HandballGame]:
+    r = requests.get(
+        TEAM_PORTRAIT_BASE_URL,
+        params={"teamtable": TEAM_D_JUGEND},
+        timeout=10,
+    )
+
+    return _parse_games(r.text)
+
+
+def get_djk_saarn_erste_herren() -> list[HandballGame]:
+    r = requests.get(
+        TEAM_PORTRAIT_BASE_URL,
+        params={"teamtable": TEAM_ERSTE_HERREN},
+        timeout=10,
+    )
+
+    return _parse_games(r.text)
