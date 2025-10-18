@@ -14,6 +14,7 @@ from family_intranet.repositories.handballnordrhein import (
     get_erste_herren,
     get_erste_herren_gruppe_url,
 )
+from family_intranet.repositories.mheg import get_muelltermine_for_home
 
 
 def home(request):
@@ -60,3 +61,13 @@ def football_games(request):
     except (ConnectionError, TimeoutError, ValueError) as e:
         context = {"error": str(e)}
         return render(request, "core/football_games.html", context)
+
+
+def muelltermine(request):
+    try:
+        termine = get_muelltermine_for_home()
+        context = {"termine": termine}
+        return render(request, "core/muelltermine.html", context)
+    except (ConnectionError, TimeoutError, ValueError) as e:
+        context = {"error": str(e)}
+        return render(request, "core/muelltermine.html", context)

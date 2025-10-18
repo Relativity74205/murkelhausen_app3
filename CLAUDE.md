@@ -73,15 +73,17 @@
 ### Key Files & Locations
 - **Settings**: `family_intranet/settings.py` (configured with django-htmx)
 - **Main URLs**: `family_intranet/urls.py` (includes core.urls)
-- **Core URLs**: `core/urls.py` (home, football_games, handball_games)
-- **Core Views**: `core/views.py` (home, football_games, handball_games)
+- **Core URLs**: `core/urls.py` (home, football_games, handball_games, muelltermine)
+- **Core Views**: `core/views.py` (home, football_games, handball_games, muelltermine)
 - **Templates**:
   - `core/templates/core/home.html` (Bootstrap + HTMX)
   - `core/templates/core/football_games.html` (Football schedule display)
   - `core/templates/core/handball_games.html` (Handball schedule display)
+  - `core/templates/core/muelltermine.html` (Trash collection schedule)
 - **Repositories**:
   - `family_intranet/repositories/fussballde.py` (Football web scraping)
   - `family_intranet/repositories/handballnordrhein.py` (Handball web scraping)
+  - `family_intranet/repositories/mheg.py` (MHEG waste management API)
 - **Dependencies**: `pyproject.toml` (managed by uv)
 
 ### Implemented Features
@@ -147,6 +149,34 @@
   - spielbericht_genehmigt (bool | None)
   - spielfrei (bool | None)
 
+#### 4. Mülltermine (Trash Collection Schedule)
+- **Status**: ✅ Complete
+- **URL**: `/muell/`
+- **View**: `core.views.muelltermine` (`core/views.py:59-69`)
+- **Template**: `core/templates/core/muelltermine.html`
+- **Repository**: `family_intranet/repositories/mheg.py`
+- **Description**: Displays upcoming trash collection dates from MHEG waste management API
+- **Features**:
+  - Fetches collection schedule for configured address
+  - Color-coded badges for different waste types:
+    - Restmüll (gray)
+    - Papier (blue)
+    - Gelbe Tonne (yellow)
+    - Biotonne (green)
+    - Weihnachtsbaum (red)
+  - Special badges for "Heute" (today) and "Morgen" (tomorrow)
+  - Shows days until collection
+  - Error handling for API/network issues
+  - Responsive Bootstrap layout with card-based design
+- **Dependencies**: requests, babel, pydantic, cachetools, python-dateutil
+- **Data Model**: `MuellTermine` Pydantic BaseModel with fields:
+  - art (str) - waste type
+  - datum (date) - collection date
+  - delta_days (int) - days until collection
+  - day (str) - German day name
+- **API**: Uses MHEG waste management API with caching (15 minutes)
+- **Configuration Notes**: Address is hardcoded in mheg.py (str_name, str_hnr, fra_strase)
+
 ### Development Commands
 - **Run Server**: `uv run python manage.py runserver`
 - **Add Dependencies**: `uv add package_name`
@@ -186,12 +216,14 @@
 - **Code Quality**:
   - Ruff configured for Django projects with comprehensive rules
   - Per-file ignores for Django-generated files (manage.py, migrations)
-  - DTZ007 ignored for handballnordrhein.py (date-only parsing)
+  - DTZ007 ignored for handballnordrhein.py, fussballde.py (date-only parsing)
+  - mheg.py: DTZ005, DTZ011, N815, E501, PLR2004 ignored (legacy code)
+  - gymbroich.py: all rules ignored (legacy code)
   - .github files excluded from linting
 - **Formatting**: Double quotes, 88 character line length, isort integration
 - **Type Checking**:
   - ty (Astral's ultra-fast type checker) configured for Python 3.13
-  - Excludes: migrations, manage.py, .venv, .github
+  - Excludes: migrations, manage.py, .venv, .github, gymbroich.py, mheg.py (legacy code)
 - **Error Handling**: Specific exception types (ConnectionError, TimeoutError, ValueError)
 - **Web Scraping**: BeautifulSoup4 for HTML parsing, requests for HTTP calls
 

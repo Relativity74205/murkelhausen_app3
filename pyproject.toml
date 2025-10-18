@@ -12,6 +12,7 @@ dependencies = [
     "django-htmx>=1.25.0,<2.0",
     "psycopg2>=2.9.10,<3.0",
     "pydantic>=2.11.9,<3.0",
+    "python-dateutil>=2.9.0.post0",
     "requests>=2.32.5,<3.0",
 ]
 
@@ -95,7 +96,7 @@ ignore = [
 "family_intranet/repositories/handballnordrhein.py" = ["DTZ007", "PLR2004"]
 "family_intranet/repositories/fussballde.py" = ["DTZ007"]
 "family_intranet/repositories/gymbroich.py" = ["ALL"]
-"family_intranet/repositories/mheg.py" = ["ALL"]
+"family_intranet/repositories/mheg.py" = ["DTZ005", "DTZ011", "N815", "E501", "PLR2004"]
 ".github/**/*.py" = ["ALL"]
 
 [tool.ruff.lint.isort]

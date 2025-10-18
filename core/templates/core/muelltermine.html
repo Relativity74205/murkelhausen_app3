@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mülltermine - Murkelhausen Family</title>
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- HTMX -->
+    <script src="https://unpkg.com/htmx.org@2.0.1"></script>
+
+    <!-- Custom CSS -->
+    <style>
+        .hero-section {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 3rem 0;
+        }
+        .termin-card {
+            transition: transform 0.2s;
+        }
+        .termin-card:hover {
+            transform: translateY(-3px);
+        }
+        .badge-restmuell {
+            background-color: #6c757d;
+        }
+        .badge-papier {
+            background-color: #0d6efd;
+        }
+        .badge-gelbe-tonne {
+            background-color: #ffc107;
+            color: #000;
+        }
+        .badge-biotonne {
+            background-color: #198754;
+        }
+        .badge-weihnachtsbaum {
+            background-color: #dc3545;
+        }
+        .badge-today {
+            background-color: #d63384;
+        }
+        .badge-tomorrow {
+            background-color: #fd7e14;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="{% url 'home' %}">
+                🏠 Murkelhausen Family
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'home' %}">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" hx-get="/calendar" hx-target="#main-content">Calendar</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'football_games' %}">Football</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'handball_games' %}">Handball</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="{% url 'muelltermine' %}">Müll</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero-section">
+        <div class="container text-center">
+            <h1 class="display-4 mb-3">🗑️ Müllabfuhrtermine</h1>
+            <p class="lead">Friedhofstraße 62, Mülheim</p>
+        </div>
+    </section>
+
+    <!-- Main Content -->
+    <div class="container my-5">
+        {% if error %}
+            <div class="alert alert-danger" role="alert">
+                <h4 class="alert-heading">Fehler beim Laden der Daten</h4>
+                <p>{{ error }}</p>
+            </div>
+        {% else %}
+            {% if termine %}
+                <div class="row g-3">
+                    {% for termin in termine %}
+                        <div class="col-12">
+                            <div class="card termin-card shadow-sm">
+                                <div class="card-body">
+                                    <div class="row align-items-center">
+                                        <div class="col-md-3">
+                                            <div class="text-center">
+                                                <div class="fw-bold fs-5">{{ termin.datum|date:"D, d.m.Y" }}</div>
+                                                <small class="text-muted">{{ termin.day }}</small>
+                                                {% if termin.delta_days == 0 %}
+                                                    <div class="mt-1"><span class="badge badge-today">Heute!</span></div>
+                                                {% elif termin.delta_days == 1 %}
+                                                    <div class="mt-1"><span class="badge badge-tomorrow">Morgen</span></div>
+                                                {% else %}
+                                                    <div class="mt-1"><span class="badge bg-secondary">in {{ termin.delta_days }} Tagen</span></div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        <div class="col-md-9">
+                                            <div class="d-flex align-items-center">
+                                                <div class="flex-grow-1">
+                                                    <h5 class="mb-0">
+                                                        {% if termin.art == "Restmüll" %}
+                                                            <span class="badge badge-restmuell fs-6">{{ termin.art }}</span>
+                                                        {% elif termin.art == "Papier" %}
+                                                            <span class="badge badge-papier fs-6">{{ termin.art }}</span>
+                                                        {% elif termin.art == "Gelbe Tonne" %}
+                                                            <span class="badge badge-gelbe-tonne fs-6">{{ termin.art }}</span>
+                                                        {% elif termin.art == "Biotonne" %}
+                                                            <span class="badge badge-biotonne fs-6">{{ termin.art }}</span>
+                                                        {% elif termin.art == "Weihnachtsbaum" %}
+                                                            <span class="badge badge-weihnachtsbaum fs-6">{{ termin.art }}</span>
+                                                        {% else %}
+                                                            <span class="badge bg-secondary fs-6">{{ termin.art }}</span>
+                                                        {% endif %}
+                                                    </h5>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="alert alert-info">Keine Termine gefunden.</div>
+            {% endif %}
+        {% endif %}
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-white py-4 mt-5">
+        <div class="container text-center">
+            <p>&copy; 2025 Murkelhausen Family Intranet. Built with ❤️ using Django, HTMX & Bootstrap.</p>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
