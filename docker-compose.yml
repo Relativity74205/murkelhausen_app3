@@ -1,4 +1,3 @@
-version: '3'
 services:
   murkel3:
     image: ghcr.io/relativity74205/murkelhausen_app3/murkel_app3:1.1.0
@@ -15,6 +14,6 @@ services:
       - DJANGO__DEBUG=${DJANGO__DEBUG}
       - DJANGO__ALLOWED_HOSTS=${DJANGO__ALLOWED_HOSTS}
       - PI_HOLE_TOKEN=${PI_HOLE_TOKEN}
-      - GOOGLE_PRIVATE_KEY=${GOOGLE_PRIVATE_KEY}
+#      - GOOGLE_PRIVATE_KEY=${GOOGLE_PRIVATE_KEY}
       - PODCASTINDEX_API_SECRET=${PODCASTINDEX_API_SECRET}
       - OPENWEATHERMAP_API_KEY=${OPENWEATHERMAP_API_KEY}
