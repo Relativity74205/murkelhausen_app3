@@ -49,6 +49,9 @@
                         <a class="nav-link" href="#" hx-get="/calendar" hx-target="#main-content">Calendar</a>
                     </li>
                     <li class="nav-item">
+                        <a class="nav-link" href="{% url 'football_games' %}">Football</a>
+                    </li>
+                    <li class="nav-item">
                         <a class="nav-link" href="{% url 'handball_games' %}">Handball</a>
                     </li>
                 </ul>
@@ -70,7 +73,7 @@
             <div class="container">
                 <div class="row g-4 justify-content-center">
                     <!-- Calendar Feature -->
-                    <div class="col-md-5">
+                    <div class="col-md-4">
                         <div class="card feature-card shadow-sm">
                             <div class="card-body text-center p-4">
                                 <div class="mb-3">
@@ -88,12 +91,30 @@
                         </div>
                     </div>
 
-                    <!-- Games Feature -->
-                    <div class="col-md-5">
+                    <!-- Football Feature -->
+                    <div class="col-md-4">
                         <div class="card feature-card shadow-sm">
                             <div class="card-body text-center p-4">
                                 <div class="mb-3">
                                     <i class="display-4">⚽</i>
+                                </div>
+                                <h5 class="card-title">Football</h5>
+                                <p class="card-text">
+                                    Fußball-Spielpläne des VfB Speldorfs (E2-Junioren und Heimspiele)
+                                </p>
+                                <a href="{% url 'football_games' %}" class="btn btn-success">
+                                    View
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Handball Feature -->
+                    <div class="col-md-4">
+                        <div class="card feature-card shadow-sm">
+                            <div class="card-body text-center p-4">
+                                <div class="mb-3">
+                                    <i class="display-4">🤾</i>
                                 </div>
                                 <h5 class="card-title">Handball</h5>
                                 <p class="card-text">

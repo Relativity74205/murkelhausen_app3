@@ -37,6 +37,12 @@
             font-weight: bold;
             color: #764ba2;
         }
+        .home-game {
+            border-left: 4px solid #28a745;
+        }
+        .away-game {
+            border-left: 4px solid #dc3545;
+        }
     </style>
 </head>
 <body>
@@ -56,6 +62,9 @@
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="#" hx-get="/calendar" hx-target="#main-content">Calendar</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'football_games' %}">Football</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link active" href="{% url 'handball_games' %}">Handball</a>
@@ -111,7 +120,7 @@
                     <div class="row g-3">
                         {% for game in d_jugend_games %}
                             <div class="col-12">
-                                <div class="card game-card shadow-sm">
+                                <div class="card game-card shadow-sm {% if 'Saarn' in game.home_team %}home-game{% elif 'Saarn' in game.away_team %}away-game{% endif %}">
                                     <div class="card-body">
                                         <div class="row align-items-center">
                                             <div class="col-md-2">
@@ -128,13 +137,15 @@
                                                     {% if game.spielfrei %}
                                                         <span class="badge badge-spielfrei mt-1">Spielfrei</span>
                                                     {% endif %}
+                                                    {% if 'Saarn' in game.home_team %}
+                                                        <div class="mt-1"><span class="badge bg-success">Heim</span></div>
+                                                    {% elif 'Saarn' in game.away_team %}
+                                                        <div class="mt-1"><span class="badge bg-danger">Auswärts</span></div>
+                                                    {% endif %}
                                                 </div>
                                             </div>
                                             <div class="col-md-7">
                                                 <h5 class="mb-1">{{ game.home_team }} vs {{ game.away_team }}</h5>
-                                                <p class="text-muted mb-0">
-                                                    <i class="bi bi-geo-alt"></i> {{ game.location }}
-                                                </p>
                                             </div>
                                             <div class="col-md-3 text-center">
                                                 {% if game.result %}
@@ -177,7 +188,7 @@
                     <div class="row g-3">
                         {% for game in erste_herren_games %}
                             <div class="col-12">
-                                <div class="card game-card shadow-sm">
+                                <div class="card game-card shadow-sm {% if 'Saarn' in game.home_team %}home-game{% elif 'Saarn' in game.away_team %}away-game{% endif %}">
                                     <div class="card-body">
                                         <div class="row align-items-center">
                                             <div class="col-md-2">
@@ -194,13 +205,15 @@
                                                     {% if game.spielfrei %}
                                                         <span class="badge badge-spielfrei mt-1">Spielfrei</span>
                                                     {% endif %}
+                                                    {% if 'Saarn' in game.home_team %}
+                                                        <div class="mt-1"><span class="badge bg-success">Heim</span></div>
+                                                    {% elif 'Saarn' in game.away_team %}
+                                                        <div class="mt-1"><span class="badge bg-danger">Auswärts</span></div>
+                                                    {% endif %}
                                                 </div>
                                             </div>
                                             <div class="col-md-7">
                                                 <h5 class="mb-1">{{ game.home_team }} vs {{ game.away_team }}</h5>
-                                                <p class="text-muted mb-0">
-                                                    <i class="bi bi-geo-alt"></i> {{ game.location }}
-                                                </p>
                                             </div>
                                             <div class="col-md-3 text-center">
                                                 {% if game.result %}

@@ -7,6 +7,7 @@ requires-python = ">=3.13"
 dependencies = [
     "babel>=2.17.0",
     "beautifulsoup4>=4.14.0",
+    "cachetools>=6.2.1",
     "django>=5.2.6,<6.0",
     "django-htmx>=1.25.0,<2.0",
     "psycopg2>=2.9.10,<3.0",
@@ -92,6 +93,9 @@ ignore = [
 "manage.py" = ["T201", "PLC0415", "TRY003", "EM101"]
 "**/migrations/*.py" = ["E501", "RUF012"]
 "family_intranet/repositories/handballnordrhein.py" = ["DTZ007", "PLR2004"]
+"family_intranet/repositories/fussballde.py" = ["DTZ007"]
+"family_intranet/repositories/gymbroich.py" = ["ALL"]
+"family_intranet/repositories/mheg.py" = ["ALL"]
 ".github/**/*.py" = ["ALL"]
 
 [tool.ruff.lint.isort]
@@ -125,4 +129,6 @@ exclude = [
     "build",
     "dist",
     ".github",
+    "family_intranet/repositories/gymbroich.py",
+    "family_intranet/repositories/mheg.py",
 ]

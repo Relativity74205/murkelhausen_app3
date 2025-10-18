@@ -73,12 +73,15 @@
 ### Key Files & Locations
 - **Settings**: `family_intranet/settings.py` (configured with django-htmx)
 - **Main URLs**: `family_intranet/urls.py` (includes core.urls)
-- **Core URLs**: `core/urls.py` (home view, handball games)
-- **Core Views**: `core/views.py` (home, handball_games)
+- **Core URLs**: `core/urls.py` (home, football_games, handball_games)
+- **Core Views**: `core/views.py` (home, football_games, handball_games)
 - **Templates**:
   - `core/templates/core/home.html` (Bootstrap + HTMX)
+  - `core/templates/core/football_games.html` (Football schedule display)
   - `core/templates/core/handball_games.html` (Handball schedule display)
-- **Repositories**: `family_intranet/repositories/handballnordrhein.py` (Web scraping)
+- **Repositories**:
+  - `family_intranet/repositories/fussballde.py` (Football web scraping)
+  - `family_intranet/repositories/handballnordrhein.py` (Handball web scraping)
 - **Dependencies**: `pyproject.toml` (managed by uv)
 
 ### Implemented Features
@@ -94,22 +97,44 @@
   - HTMX loading indicators
   - Custom CSS for styling
 
-#### 2. Handball Games Schedule
+#### 2. Football Games Schedule
+- **Status**: ✅ Complete
+- **URL**: `/football/`
+- **View**: `core.views.football_games` (`core/views.py:44-56`)
+- **Template**: `core/templates/core/football_games.html`
+- **Repository**: `family_intranet/repositories/fussballde.py`
+- **Description**: Web scraping feature for VfB Speldorf football teams
+- **Features**:
+  - Scrapes game schedules from https://www.fussball.de
+  - Tab-based interface with two teams: E2-Junioren and VfB Speldorf (Heimspiele)
+  - Shows game date, time, game type, teams, and results
+  - Error handling for network issues
+  - Responsive Bootstrap layout with card-based design
+  - E2-Junioren as default tab
+- **Dependencies**: requests, beautifulsoup4
+- **Data Model**: Dictionary with fields:
+  - game_date (date)
+  - time (str)
+  - game_type (str)
+  - home_team, away_team (str)
+  - result (str | None)
+
+#### 3. Handball Games Schedule
 - **Status**: ✅ Complete
 - **URL**: `/handball/`
-- **View**: `core.views.handball_games` (`core/views.py:15-31`)
+- **View**: `core.views.handball_games` (`core/views.py:21-41`)
 - **Template**: `core/templates/core/handball_games.html`
 - **Repository**: `family_intranet/repositories/handballnordrhein.py`
 - **Description**: Web scraping feature for DJK Saarn handball teams
 - **Features**:
   - Scrapes game schedules from https://hnr-handball.liga.nu
-  - Displays two teams: D-Jugend and Erste Herren
+  - Tab-based interface with two teams: D-Jugend and Erste Herren
   - Shows game date, time, location, teams, and results
-  - Links to official game reports (Spielbericht)
+  - Links to official game reports (Spielbericht) and group standings (Tabelle)
   - Badges for special cases: "Spielfrei" (free date), "Verlegt" (postponed)
   - Error handling for network issues
   - Responsive Bootstrap layout with card-based design
-  - Direct links to league website for each team
+  - D-Jugend as default tab
 - **Dependencies**: requests, beautifulsoup4, babel
 - **Data Model**: `HandballGame` dataclass with fields:
   - game_date (date | None)
@@ -145,13 +170,12 @@
 
 ### Next Steps (Future Implementation)
 1. **Calendar Integration**: Google Calendar API connection
-2. **Football Scraping**: Web scraping for football games (similar to handball)
-3. **Information Hub**: APIs and additional data sources
-4. **PostgreSQL Setup**: Replace SQLite with PostgreSQL
-5. **User Authentication**: Family member login system
-6. **Admin Interface**: Django admin customization for family data
-7. **Data Caching**: Cache scraped handball data to reduce API calls
-8. **Automatic Updates**: Background task to refresh handball data periodically
+2. **Information Hub**: APIs and additional data sources
+3. **PostgreSQL Setup**: Replace SQLite with PostgreSQL
+4. **User Authentication**: Family member login system
+5. **Admin Interface**: Django admin customization for family data
+6. **Data Caching**: Cache scraped sports data to reduce API calls
+7. **Automatic Updates**: Background task to refresh sports data periodically
 
 ### Technical Notes
 - **HTMX Target**: `#main-content` div for dynamic updates (not used on handball page)
