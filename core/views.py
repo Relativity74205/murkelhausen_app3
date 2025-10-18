@@ -14,7 +14,10 @@ from family_intranet.repositories.handballnordrhein import (
     get_erste_herren,
     get_erste_herren_gruppe_url,
 )
-from family_intranet.repositories.mheg import get_muelltermine_for_home
+from family_intranet.repositories.mheg import (
+    get_muelltermine_for_home,
+    get_wertstoffhof_oeffnungszeiten,
+)
 
 
 def home(request):
@@ -66,7 +69,8 @@ def football_games(request):
 def muelltermine(request):
     try:
         termine = get_muelltermine_for_home()
-        context = {"termine": termine}
+        wertstoffhof = get_wertstoffhof_oeffnungszeiten()
+        context = {"termine": termine, "wertstoffhof": wertstoffhof}
         return render(request, "core/muelltermine.html", context)
     except (ConnectionError, TimeoutError, ValueError) as e:
         context = {"error": str(e)}

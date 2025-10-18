@@ -90,63 +90,131 @@
 
     <!-- Main Content -->
     <div class="container my-5">
-        {% if error %}
-            <div class="alert alert-danger" role="alert">
-                <h4 class="alert-heading">Fehler beim Laden der Daten</h4>
-                <p>{{ error }}</p>
-            </div>
-        {% else %}
-            {% if termine %}
-                <div class="row g-3">
-                    {% for termin in termine %}
-                        <div class="col-12">
-                            <div class="card termin-card shadow-sm">
-                                <div class="card-body">
-                                    <div class="row align-items-center">
-                                        <div class="col-md-3">
-                                            <div class="text-center">
-                                                <div class="fw-bold fs-5">{{ termin.datum|date:"D, d.m.Y" }}</div>
-                                                <small class="text-muted">{{ termin.day }}</small>
-                                                {% if termin.delta_days == 0 %}
-                                                    <div class="mt-1"><span class="badge badge-today">Heute!</span></div>
-                                                {% elif termin.delta_days == 1 %}
-                                                    <div class="mt-1"><span class="badge badge-tomorrow">Morgen</span></div>
-                                                {% else %}
-                                                    <div class="mt-1"><span class="badge bg-secondary">in {{ termin.delta_days }} Tagen</span></div>
-                                                {% endif %}
-                                            </div>
-                                        </div>
-                                        <div class="col-md-9">
-                                            <div class="d-flex align-items-center">
-                                                <div class="flex-grow-1">
-                                                    <h5 class="mb-0">
-                                                        {% if termin.art == "Restmüll" %}
-                                                            <span class="badge badge-restmuell fs-6">{{ termin.art }}</span>
-                                                        {% elif termin.art == "Papier" %}
-                                                            <span class="badge badge-papier fs-6">{{ termin.art }}</span>
-                                                        {% elif termin.art == "Gelbe Tonne" %}
-                                                            <span class="badge badge-gelbe-tonne fs-6">{{ termin.art }}</span>
-                                                        {% elif termin.art == "Biotonne" %}
-                                                            <span class="badge badge-biotonne fs-6">{{ termin.art }}</span>
-                                                        {% elif termin.art == "Weihnachtsbaum" %}
-                                                            <span class="badge badge-weihnachtsbaum fs-6">{{ termin.art }}</span>
+        <!-- Tabs Navigation -->
+        <ul class="nav nav-tabs mb-4" id="muellTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="abfuhr-tab" data-bs-toggle="tab" data-bs-target="#abfuhr" type="button" role="tab" aria-controls="abfuhr" aria-selected="true">
+                    Abfuhrtermine
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="wertstoffhof-tab" data-bs-toggle="tab" data-bs-target="#wertstoffhof" type="button" role="tab" aria-controls="wertstoffhof" aria-selected="false">
+                    Wertstoffhof
+                </button>
+            </li>
+        </ul>
+
+        <!-- Tabs Content -->
+        <div class="tab-content" id="muellTabsContent">
+            <!-- Abfuhrtermine Tab -->
+            <div class="tab-pane fade show active" id="abfuhr" role="tabpanel" aria-labelledby="abfuhr-tab">
+                {% if error %}
+                    <div class="alert alert-danger" role="alert">
+                        <h4 class="alert-heading">Fehler beim Laden der Daten</h4>
+                        <p>{{ error }}</p>
+                    </div>
+                {% else %}
+                    {% if termine %}
+                        <div class="row g-3">
+                            {% for termin in termine %}
+                                <div class="col-12">
+                                    <div class="card termin-card shadow-sm">
+                                        <div class="card-body">
+                                            <div class="row align-items-center">
+                                                <div class="col-md-3">
+                                                    <div class="text-center">
+                                                        <div class="fw-bold fs-5">{{ termin.datum|date:"D, d.m.Y" }}</div>
+                                                        <small class="text-muted">{{ termin.day }}</small>
+                                                        {% if termin.delta_days == 0 %}
+                                                            <div class="mt-1"><span class="badge badge-today">Heute!</span></div>
+                                                        {% elif termin.delta_days == 1 %}
+                                                            <div class="mt-1"><span class="badge badge-tomorrow">Morgen</span></div>
                                                         {% else %}
-                                                            <span class="badge bg-secondary fs-6">{{ termin.art }}</span>
+                                                            <div class="mt-1"><span class="badge bg-secondary">in {{ termin.delta_days }} Tagen</span></div>
                                                         {% endif %}
-                                                    </h5>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-9">
+                                                    <div class="d-flex align-items-center">
+                                                        <div class="flex-grow-1">
+                                                            <h5 class="mb-0">
+                                                                {% if termin.art == "Restmüll" %}
+                                                                    <span class="badge badge-restmuell fs-6">{{ termin.art }}</span>
+                                                                {% elif termin.art == "Papier" %}
+                                                                    <span class="badge badge-papier fs-6">{{ termin.art }}</span>
+                                                                {% elif termin.art == "Gelbe Tonne" %}
+                                                                    <span class="badge badge-gelbe-tonne fs-6">{{ termin.art }}</span>
+                                                                {% elif termin.art == "Biotonne" %}
+                                                                    <span class="badge badge-biotonne fs-6">{{ termin.art }}</span>
+                                                                {% elif termin.art == "Weihnachtsbaum" %}
+                                                                    <span class="badge badge-weihnachtsbaum fs-6">{{ termin.art }}</span>
+                                                                {% else %}
+                                                                    <span class="badge bg-secondary fs-6">{{ termin.art }}</span>
+                                                                {% endif %}
+                                                            </h5>
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="alert alert-info">Keine Termine gefunden.</div>
+                    {% endif %}
+                {% endif %}
+            </div>
+
+            <!-- Wertstoffhof Tab -->
+            <div class="tab-pane fade" id="wertstoffhof" role="tabpanel" aria-labelledby="wertstoffhof-tab">
+                <div class="d-flex justify-content-end mb-4">
+                    <a href="https://www.mheg.de/fuer-privathaushalte/entsorgung/wertstoffhof/" target="_blank" class="btn btn-outline-secondary btn-sm">
+                        Zur Webseite →
+                    </a>
+                </div>
+
+                {% if wertstoffhof %}
+                    <div class="card shadow-sm">
+                        <div class="card-body">
+                            <h2 class="card-title mb-4">Öffnungszeiten</h2>
+
+                            <div class="row">
+                                <div class="col-12 col-lg-6 mb-4">
+                                    <h5 class="mb-3">Reguläre Öffnungszeiten</h5>
+                                    {% for day, hours in wertstoffhof.regular_hours.items %}
+                                        <p><strong>{{ day }}:</strong> {{ hours }}</p>
+                                    {% endfor %}
+                                </div>
+
+                                <div class="col-12 col-lg-6 mb-4">
+                                    {% if wertstoffhof.saturday_dates_2025 %}
+                                        <h5 class="mb-3">Samstag-Öffnungen 2025</h5>
+                                        <ul>
+                                            {% for date in wertstoffhof.saturday_dates_2025 %}
+                                                <li>{{ date }}</li>
+                                            {% endfor %}
+                                        </ul>
+                                    {% endif %}
+
+                                    {% if wertstoffhof.saturday_dates_2026 %}
+                                        <h5 class="mt-4 mb-3">Samstag-Öffnungen 2026</h5>
+                                        <ul>
+                                            {% for date in wertstoffhof.saturday_dates_2026 %}
+                                                <li>{{ date }}</li>
+                                            {% endfor %}
+                                        </ul>
+                                    {% endif %}
+                                </div>
                             </div>
                         </div>
-                    {% endfor %}
-                </div>
-            {% else %}
-                <div class="alert alert-info">Keine Termine gefunden.</div>
-            {% endif %}
-        {% endif %}
+                    </div>
+                {% else %}
+                    <div class="alert alert-info">Keine Öffnungszeiten verfügbar.</div>
+                {% endif %}
+            </div>
+        </div>
     </div>
 
     <!-- Footer -->

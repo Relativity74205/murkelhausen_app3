@@ -1,13 +1,16 @@
 import logging
+import re
 from datetime import date, timedelta
 
 import requests
 from babel.dates import format_date
+from bs4 import BeautifulSoup
 from cachetools import TTLCache, cached
 from dateutil.relativedelta import relativedelta
 from pydantic import BaseModel
 
 BASE_URL = "https://muelheim-abfallapp.regioit.de/abfall-app-muelheim/rest/"
+WERTSTOFFHOF_URL = "https://www.mheg.de/fuer-privathaushalte/entsorgung/wertstoffhof/"
 
 logger = logging.getLogger(__name__)
 
@@ -257,3 +260,94 @@ def _filter_termine(
         <= termin.datum
         <= date.today() + relativedelta(months=month_limit)
     ]
+
+
+class WertstoffhofOeffnungszeiten(BaseModel):
+    regular_hours: dict[str, str]
+    saturday_dates_2025: list[str]
+    saturday_dates_2026: list[str]
+
+
+@cached(cache=TTLCache(maxsize=1, ttl=900))  # 15 minutes
+def get_wertstoffhof_oeffnungszeiten() -> WertstoffhofOeffnungszeiten:
+    """Scrape Wertstoffhof opening hours from MHEG website."""
+    response = requests.get(WERTSTOFFHOF_URL, timeout=10)
+    response.raise_for_status()
+    soup = BeautifulSoup(response.content, "html.parser")
+
+    # Find the opening hours section
+    regular_hours = {}
+
+    # Look for the text containing opening hours
+    text_content = soup.get_text()
+
+    # Extract regular weekday hours
+    if "Montag, Mittwoch und Freitag:" in text_content:
+        match = re.search(
+            r"Montag, Mittwoch und Freitag:\s*([\d.]+\s*bis\s*[\d.]+\s*Uhr)",
+            text_content,
+        )
+        if match:
+            regular_hours["Montag, Mittwoch und Freitag"] = match.group(1)
+
+    if "Dienstag und Donnerstag:" in text_content:
+        match = re.search(
+            r"Dienstag und Donnerstag:\s*([\d.]+\s*bis\s*[\d.]+\s*Uhr)", text_content
+        )
+        if match:
+            regular_hours["Dienstag und Donnerstag"] = match.group(1)
+
+    # Extract Saturday general rule
+    if "jeden ersten Samstag im Monat" in text_content:
+        match = re.search(
+            r"jeden ersten Samstag im Monat:\s*([\d.]+\s*bis\s*[\d.]+\s*Uhr)",
+            text_content,
+        )
+        if match:
+            regular_hours["Samstag"] = (
+                f"In der Regel jeden ersten Samstag im Monat: {match.group(1)}"
+            )
+
+    # Extract Saturday dates for 2025
+    saturday_dates_2025 = []
+    match_2025 = re.search(
+        r"An folgenden Samstagen öffnet unser Hof 2025:(.*?)(?:An folgenden Samstagen öffnet unser Hof 2026:|$)",
+        text_content,
+        re.DOTALL,
+    )
+    if match_2025:
+        dates_text = match_2025.group(1)
+        # Find all dates in format "DD. Month"
+        dates = re.findall(r"(\d{1,2}\.\s+\w+)", dates_text)
+        saturday_dates_2025 = dates
+
+    # Extract Saturday dates for 2026
+    # The 2026 section uses an ordered list with start="3", listing only months
+    saturday_dates_2026 = []
+    strong_2026 = soup.find(
+        "strong", string=re.compile(r"An folgenden Samstagen öffnet unser Hof 2026")
+    )
+    if strong_2026:
+        # Find the <ol> element that follows
+        ol_element = strong_2026.find_parent().find_next_sibling("ol")
+        if ol_element:
+            # These are first Saturdays of each month in 2026
+            # Pattern: 3, 7, 7, 4, 2, 6, 4, 1, 5, 3, 7, 5
+            first_saturdays_2026 = [3, 7, 7, 4, 2, 6, 4, 1, 5, 3, 7, 5]
+            list_items = ol_element.find_all("li")
+            for idx, li in enumerate(list_items):
+                month = li.get_text(strip=True)
+                if idx < len(first_saturdays_2026):
+                    day = first_saturdays_2026[idx]
+                    saturday_dates_2026.append(f"{day}. {month}")
+
+    logger.info(
+        f"Retrieved Wertstoffhof opening hours: {len(regular_hours)} regular hours, "
+        f"{len(saturday_dates_2025)} Saturday dates 2025, {len(saturday_dates_2026)} Saturday dates 2026"
+    )
+
+    return WertstoffhofOeffnungszeiten(
+        regular_hours=regular_hours,
+        saturday_dates_2025=saturday_dates_2025,
+        saturday_dates_2026=saturday_dates_2026,
+    )
