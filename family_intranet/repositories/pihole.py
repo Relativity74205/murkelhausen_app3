@@ -13,7 +13,7 @@ class PiHoleConfig:
     PRIMARY_PASSWORD = os.getenv("PIHOLE_PRIMARY_PASSWORD", "")
 
     # Backup Pi-hole
-    BACKUP_URL = os.getenv("PIHOLE_BACKUP_URL", "http://rasp2.local")
+    BACKUP_URL = os.getenv("PIHOLE_BACKUP_URL", "http://rasp2.lan")
     BACKUP_PASSWORD = os.getenv("PIHOLE_BACKUP_PASSWORD", "")
 
     TIMEOUT = 10
