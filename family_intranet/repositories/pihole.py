@@ -13,7 +13,7 @@ class PiHoleConfig:
     PRIMARY_PASSWORD = os.getenv("PIHOLE_PRIMARY_PASSWORD", "")
 
     # Backup Pi-hole
-    BACKUP_URL = os.getenv("PIHOLE_BACKUP_URL", "http://rasp2.lan")
+    BACKUP_URL = os.getenv("PIHOLE_BACKUP_URL", "http://192.168.1.28")  # rasp2.lan doesn't work via mDNS at the moment for some reason
     BACKUP_PASSWORD = os.getenv("PIHOLE_BACKUP_PASSWORD", "")
 
     TIMEOUT = 10
