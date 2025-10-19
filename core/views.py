@@ -1,6 +1,9 @@
+import logging
 from datetime import date
 
+from django.http import JsonResponse
 from django.shortcuts import render
+from django.views.decorators.http import require_POST
 
 from family_intranet.repositories.fussballde import (
     get_e2_junioren_home_url,
@@ -25,6 +28,7 @@ from family_intranet.repositories.mheg import (
     get_muelltermine_for_home,
     get_wertstoffhof_oeffnungszeiten,
 )
+from family_intranet.repositories.pihole import MultiPiHoleRepository
 
 
 def home(request):
@@ -113,3 +117,46 @@ def vertretungsplan(request):
     except (ConnectionError, TimeoutError, ValueError) as e:
         context = {"error": str(e)}
         return render(request, "core/vertretungsplan.html", context)
+
+
+def pihole_status(request):  # noqa: ARG001
+    """Get current Pi-hole blocking status."""
+    logger = logging.getLogger(__name__)
+
+    try:
+        repo = MultiPiHoleRepository()
+        status = repo.get_blocking_status()
+
+        return JsonResponse(
+            {
+                "success": True,
+                "blocking": status.blocking,
+                "timer": int(status.timer) if status.timer else None,
+            }
+        )
+    except (ConnectionError, TimeoutError, ValueError) as e:
+        logger.error(f"Pi-hole status error: {e}", exc_info=True)
+        return JsonResponse({"success": False, "error": str(e)}, status=500)
+
+
+@require_POST
+def pihole_disable(request):  # noqa: ARG001
+    """Disable Pi-hole DNS blocking for 5 minutes."""
+    logger = logging.getLogger(__name__)
+
+    try:
+        repo = MultiPiHoleRepository()
+        logger.info("Attempting to disable Pi-hole blocking on all servers")
+        status = repo.disable_blocking(duration_seconds=300)  # 5 minutes
+
+        return JsonResponse(
+            {
+                "success": True,
+                "blocking": status.blocking,
+                "timer": int(status.timer) if status.timer else None,
+                "message": "DNS blocking disabled for 5 minutes",
+            }
+        )
+    except (ConnectionError, TimeoutError, ValueError) as e:
+        logger.error(f"Pi-hole error: {e}", exc_info=True)
+        return JsonResponse({"success": False, "error": str(e)}, status=500)

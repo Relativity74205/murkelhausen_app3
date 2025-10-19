@@ -73,8 +73,8 @@
 ### Key Files & Locations
 - **Settings**: `family_intranet/settings.py` (configured with django-htmx)
 - **Main URLs**: `family_intranet/urls.py` (includes core.urls)
-- **Core URLs**: `core/urls.py` (home, football_games, handball_games, muelltermine, vertretungsplan)
-- **Core Views**: `core/views.py` (home, football_games, handball_games, muelltermine, vertretungsplan)
+- **Core URLs**: `core/urls.py` (home, football_games, handball_games, muelltermine, vertretungsplan, pihole_status, pihole_disable)
+- **Core Views**: `core/views.py` (home, football_games, handball_games, muelltermine, vertretungsplan, pihole_status, pihole_disable)
 - **Templates**:
   - `core/templates/core/home.html` (Bootstrap + HTMX)
   - `core/templates/core/football_games.html` (Football schedule display)
@@ -86,6 +86,7 @@
   - `family_intranet/repositories/handballnordrhein.py` (Handball web scraping)
   - `family_intranet/repositories/mheg.py` (MHEG waste management API)
   - `family_intranet/repositories/gymbroich.py` (Gymnasium Broich Vertretungsplan API)
+  - `family_intranet/repositories/pihole.py` (Pi-hole DNS blocking control API)
 - **Dependencies**: `pyproject.toml` (managed by uv)
 
 ### Implemented Features
@@ -209,6 +210,55 @@
   - MATTIS_CLASS_SUFFIX = "B"
   - Class is calculated dynamically based on current date
 
+#### 6. Pi-hole Control
+- **Status**: ✅ Complete
+- **URLs**:
+  - `/pihole/status/` (GET endpoint for current status)
+  - `/pihole/disable/` (POST endpoint to disable blocking)
+- **Views**:
+  - `core.views.pihole_status` (`core/views.py:122-139`)
+  - `core.views.pihole_disable` (`core/views.py:142-162`)
+- **Repository**: `family_intranet/repositories/pihole.py`
+- **Description**: Remote control for Pi-hole DNS blocking (disables blocking for 5 minutes)
+- **Features**:
+  - Button on home page to disable DNS blocking temporarily
+  - Supports multiple Pi-hole servers (primary + optional backup)
+  - Disables blocking on both servers simultaneously
+  - Backup server failure doesn't prevent primary from working
+  - Communicates with Pi-hole v6 API
+  - Disables blocking for exactly 5 minutes (300 seconds)
+  - Live countdown timer showing time until blocking re-enables
+  - Timer automatically loads on page refresh if blocking is already disabled
+  - HTMX-powered async request with loading indicator
+  - Success/error message display with auto-dismiss (10 seconds)
+  - JSON response with blocking status and timer information
+  - Error handling for network/connection issues
+  - Uses session-based authentication with password (configured via environment variables)
+  - Session ID (sid) and CSRF token passed via headers
+- **Dependencies**: requests, pydantic
+- **Data Model**: `BlockingStatus` Pydantic BaseModel with fields:
+  - blocking (bool) - current blocking state
+  - timer (int | None) - seconds until blocking re-enables
+- **API Endpoints**:
+  - GET `/api/dns/blocking` - get current blocking status
+  - POST `/api/dns/blocking` - enable/disable blocking with optional timer
+- **Configuration**:
+  - Primary Pi-hole:
+    - `PIHOLE_PRIMARY_URL` environment variable (default: "http://rasp2.local")
+    - `PIHOLE_PRIMARY_PASSWORD` environment variable (required for authentication)
+  - Backup Pi-hole (optional):
+    - `PIHOLE_BACKUP_URL` environment variable
+    - `PIHOLE_BACKUP_PASSWORD` environment variable
+  - Legacy environment variables (backwards compatible):
+    - `PIHOLE_URL` (maps to PRIMARY_URL)
+    - `PIHOLE_PASSWORD` (maps to PRIMARY_PASSWORD)
+  - SSL verification disabled (self-signed certificate)
+  - Uses session-based authentication (POST to `/api/auth` with password)
+- **UI Integration**:
+  - Pi-hole control section on home page with warning button
+  - JavaScript event handler for HTMX response processing
+  - Bootstrap alert messages for feedback
+
 ### Development Commands
 - **Run Server**: `uv run python manage.py runserver`
 - **Add Dependencies**: `uv add package_name`
@@ -251,11 +301,12 @@
   - DTZ007 ignored for handballnordrhein.py, fussballde.py (date-only parsing)
   - mheg.py: DTZ005, DTZ011, N815, E501, PLR2004 ignored (legacy code)
   - gymbroich.py: DTZ005, DTZ007, N815, E501, S113, SIM210, PLW2901, PLR2004 ignored (API naming conventions)
+  - pihole.py: TRY003, EM101, EM102 ignored (exception message formatting)
   - .github files excluded from linting
 - **Formatting**: Double quotes, 88 character line length, isort integration
 - **Type Checking**:
   - ty (Astral's ultra-fast type checker) configured for Python 3.13
-  - Excludes: migrations, manage.py, .venv, .github, mheg.py (legacy code)
+  - Excludes: migrations, manage.py, .venv, .github, mheg.py (legacy code), pihole.py (requests type stubs)
 - **Error Handling**: Specific exception types (ConnectionError, TimeoutError, ValueError)
 - **Web Scraping**: BeautifulSoup4 for HTML parsing, requests for HTTP calls
 
