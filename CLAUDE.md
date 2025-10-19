@@ -73,17 +73,19 @@
 ### Key Files & Locations
 - **Settings**: `family_intranet/settings.py` (configured with django-htmx)
 - **Main URLs**: `family_intranet/urls.py` (includes core.urls)
-- **Core URLs**: `core/urls.py` (home, football_games, handball_games, muelltermine)
-- **Core Views**: `core/views.py` (home, football_games, handball_games, muelltermine)
+- **Core URLs**: `core/urls.py` (home, football_games, handball_games, muelltermine, vertretungsplan)
+- **Core Views**: `core/views.py` (home, football_games, handball_games, muelltermine, vertretungsplan)
 - **Templates**:
   - `core/templates/core/home.html` (Bootstrap + HTMX)
   - `core/templates/core/football_games.html` (Football schedule display)
   - `core/templates/core/handball_games.html` (Handball schedule display)
   - `core/templates/core/muelltermine.html` (Trash collection schedule)
+  - `core/templates/core/vertretungsplan.html` (School substitution schedule)
 - **Repositories**:
   - `family_intranet/repositories/fussballde.py` (Football web scraping)
   - `family_intranet/repositories/handballnordrhein.py` (Handball web scraping)
   - `family_intranet/repositories/mheg.py` (MHEG waste management API)
+  - `family_intranet/repositories/gymbroich.py` (Gymnasium Broich Vertretungsplan API)
 - **Dependencies**: `pyproject.toml` (managed by uv)
 
 ### Implemented Features
@@ -152,7 +154,7 @@
 #### 4. Mülltermine (Trash Collection Schedule)
 - **Status**: ✅ Complete
 - **URL**: `/muell/`
-- **View**: `core.views.muelltermine` (`core/views.py:59-69`)
+- **View**: `core.views.muelltermine` (`core/views.py:73-81`)
 - **Template**: `core/templates/core/muelltermine.html`
 - **Repository**: `family_intranet/repositories/mheg.py`
 - **Description**: Displays upcoming trash collection dates from MHEG waste management API
@@ -176,6 +178,36 @@
   - day (str) - German day name
 - **API**: Uses MHEG waste management API with caching (15 minutes)
 - **Configuration Notes**: Address is hardcoded in mheg.py (str_name, str_hnr, fra_strase)
+
+#### 5. Vertretungsplan (School Substitution Schedule)
+- **Status**: ✅ Complete
+- **URL**: `/vertretungsplan/`
+- **View**: `core.views.vertretungsplan` (`core/views.py:87-115`)
+- **Template**: `core/templates/core/vertretungsplan.html`
+- **Repository**: `family_intranet/repositories/gymbroich.py`
+- **Description**: Displays school substitution schedule for Mattis at Gymnasium Broich
+- **Features**:
+  - Fetches substitution schedule from Gymnasium Broich API
+  - Date selector dropdown to view different days
+  - Tab-based interface with two views:
+    - **Mattis Tab**: Shows only substitutions relevant to Mattis's class (calculated dynamically)
+    - **Gesamte Schule Tab**: Shows all substitutions for the entire school
+  - Displays lesson number, subject, teacher, room information
+  - Color-coded badges for canceled vs. substituted lessons
+  - Shows general information and announcements
+  - Displays timestamp of last update
+  - Error handling for API/network issues
+  - Responsive Bootstrap layout with card-based design
+  - Mattis tab as default view
+- **Dependencies**: requests, babel, pydantic, cachetools
+- **Data Model**: `Vertretungsplan` and `VertretungsplanEvent` Pydantic BaseModels with fields:
+  - VertretungsplanEvent: classes, lessons, subject, teacher, room, comment, canceled (with previous values)
+  - Vertretungsplan: datum, timestamp_aktualisiert, infos, events
+- **API**: Uses Gymnasium Broich Vertretungsplan API with caching (1 minute)
+- **Configuration Notes**:
+  - MATTIS_YEAR_STARTED = 2023
+  - MATTIS_CLASS_SUFFIX = "B"
+  - Class is calculated dynamically based on current date
 
 ### Development Commands
 - **Run Server**: `uv run python manage.py runserver`
@@ -218,12 +250,12 @@
   - Per-file ignores for Django-generated files (manage.py, migrations)
   - DTZ007 ignored for handballnordrhein.py, fussballde.py (date-only parsing)
   - mheg.py: DTZ005, DTZ011, N815, E501, PLR2004 ignored (legacy code)
-  - gymbroich.py: all rules ignored (legacy code)
+  - gymbroich.py: DTZ005, DTZ007, N815, E501, S113, SIM210, PLW2901, PLR2004 ignored (API naming conventions)
   - .github files excluded from linting
 - **Formatting**: Double quotes, 88 character line length, isort integration
 - **Type Checking**:
   - ty (Astral's ultra-fast type checker) configured for Python 3.13
-  - Excludes: migrations, manage.py, .venv, .github, gymbroich.py, mheg.py (legacy code)
+  - Excludes: migrations, manage.py, .venv, .github, mheg.py (legacy code)
 - **Error Handling**: Specific exception types (ConnectionError, TimeoutError, ValueError)
 - **Web Scraping**: BeautifulSoup4 for HTML parsing, requests for HTTP calls
 

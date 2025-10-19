@@ -1,3 +1,5 @@
+from datetime import date
+
 from django.shortcuts import render
 
 from family_intranet.repositories.fussballde import (
@@ -5,6 +7,11 @@ from family_intranet.repositories.fussballde import (
     get_erik_e2_junioren_next_games,
     get_speldorf_next_home_games,
     get_vfb_speldorf_home_url,
+)
+from family_intranet.repositories.gymbroich import (
+    get_vertretungsplan,
+    get_vertretungsplan_dates,
+    get_vertretungsplan_mattis,
 )
 from family_intranet.repositories.handballnordrhein import (
     get_d_jugend_gruppe_url,
@@ -75,3 +82,34 @@ def muelltermine(request):
     except (ConnectionError, TimeoutError, ValueError) as e:
         context = {"error": str(e)}
         return render(request, "core/muelltermine.html", context)
+
+
+def vertretungsplan(request):
+    try:
+        # Get available dates
+        available_dates = get_vertretungsplan_dates()
+
+        # Get the selected date from query params, default to first available date
+        selected_date_str = request.GET.get("date")
+        if selected_date_str:
+            selected_date = date.fromisoformat(selected_date_str)
+        else:
+            selected_date = available_dates[0] if available_dates else None
+
+        # Get the vertretungsplan for the selected date
+        vertretungsplan_mattis = None
+        vertretungsplan_full = None
+        if selected_date:
+            vertretungsplan_mattis = get_vertretungsplan_mattis(selected_date)
+            vertretungsplan_full = get_vertretungsplan(selected_date)
+
+        context = {
+            "available_dates": available_dates,
+            "selected_date": selected_date,
+            "vertretungsplan_mattis": vertretungsplan_mattis,
+            "vertretungsplan_full": vertretungsplan_full,
+        }
+        return render(request, "core/vertretungsplan.html", context)
+    except (ConnectionError, TimeoutError, ValueError) as e:
+        context = {"error": str(e)}
+        return render(request, "core/vertretungsplan.html", context)

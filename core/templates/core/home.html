@@ -64,6 +64,9 @@
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'muelltermine' %}">Müll</a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'vertretungsplan' %}">Vertretungsplan</a>
+                    </li>
                 </ul>
             </div>
         </div>
@@ -138,6 +141,21 @@
                                 <h5 class="card-title">Mülltermine</h5>
                                 <p class="card-text">
                                     Abfuhrtermine für Restmüll, Papier, Gelbe Tonne und Biotonne
+                                </p>
+                            </div>
+                        </a>
+                    </div>
+
+                    <!-- Vertretungsplan Feature -->
+                    <div class="col-md-4">
+                        <a href="{% url 'vertretungsplan' %}" class="card feature-card shadow-sm">
+                            <div class="card-body text-center p-4">
+                                <div class="mb-3">
+                                    <i class="display-4">📚</i>
+                                </div>
+                                <h5 class="card-title">Vertretungsplan</h5>
+                                <p class="card-text">
+                                    Vertretungsplan für Mattis am Gymnasium Broich
                                 </p>
                             </div>
                         </a>
