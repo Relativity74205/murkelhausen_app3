@@ -45,121 +45,16 @@
     </section>
 
     <!-- Main Content -->
-    <div class="container my-5">
-        {% if error %}
-            <div class="alert alert-danger" role="alert">
-                <h4 class="alert-heading">Fehler beim Laden der Daten</h4>
-                <p>{{ error }}</p>
+    <div class="container my-5" id="football-content"
+         hx-get="{% url 'football_games_data' %}"
+         hx-trigger="load"
+         hx-swap="innerHTML">
+        <!-- Loading Placeholder -->
+        <div class="text-center py-5">
+            <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+                <span class="visually-hidden">Loading...</span>
             </div>
-        {% else %}
-            <!-- Tabs Navigation -->
-            <ul class="nav nav-tabs mb-4" id="teamTabs" role="tablist">
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link active" id="e2-junioren-tab" data-bs-toggle="tab" data-bs-target="#e2-junioren" type="button" role="tab" aria-controls="e2-junioren" aria-selected="true">
-                        E2-Junioren
-                    </button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="speldorf-tab" data-bs-toggle="tab" data-bs-target="#speldorf" type="button" role="tab" aria-controls="speldorf" aria-selected="false">
-                        VfB Speldorf (Heimspiele)
-                    </button>
-                </li>
-            </ul>
-
-            <!-- Tabs Content -->
-            <div class="tab-content" id="teamTabsContent">
-                <!-- E2-Junioren Tab -->
-                <div class="tab-pane fade show active" id="e2-junioren" role="tabpanel" aria-labelledby="e2-junioren-tab">
-                    <div class="d-flex justify-content-end mb-4">
-                        <a href="{{ e2_junioren_url }}" target="_blank" class="btn btn-outline-secondary btn-sm">
-                            Mannschaft →
-                        </a>
-                    </div>
-
-                    {% if e2_junioren_games %}
-                        <div class="row g-3">
-                            {% for game in e2_junioren_games %}
-                                <div class="col-12">
-                                    <div class="card game-card shadow-sm {% if 'Speldorf' in game.home_team %}home-game{% elif 'Speldorf' in game.away_team %}away-game{% endif %}">
-                                        <div class="card-body">
-                                            <div class="row align-items-center">
-                                                <div class="col-md-2">
-                                                    <div class="text-center">
-                                                        <div class="fw-bold">{{ game.game_date|date:"D, d.m.Y" }}</div>
-                                                        <small class="text-muted">{{ game.time }} Uhr</small>
-                                                        {% if 'Speldorf' in game.home_team %}
-                                                            <div class="mt-1"><span class="badge bg-success">Heim</span></div>
-                                                        {% elif 'Speldorf' in game.away_team %}
-                                                            <div class="mt-1"><span class="badge bg-danger">Auswärts</span></div>
-                                                        {% endif %}
-                                                    </div>
-                                                </div>
-                                                <div class="col-md-7">
-                                                    <h5 class="mb-1">{{ game.home_team }} vs {{ game.away_team }}</h5>
-                                                </div>
-                                                <div class="col-md-3 text-center">
-                                                    {% if game.result %}
-                                                        <div class="fs-3 fw-bold text-success">{{ game.result }}</div>
-                                                    {% else %}
-                                                        <span class="badge badge-upcoming">Ausstehend</span>
-                                                    {% endif %}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            {% endfor %}
-                        </div>
-                    {% else %}
-                        <div class="alert alert-info">Keine Spiele gefunden.</div>
-                    {% endif %}
-                </div>
-
-                <!-- VfB Speldorf Tab -->
-                <div class="tab-pane fade" id="speldorf" role="tabpanel" aria-labelledby="speldorf-tab">
-                    <div class="d-flex justify-content-end mb-4">
-                        <a href="{{ vfb_speldorf_url }}" target="_blank" class="btn btn-outline-secondary btn-sm">
-                            Verein →
-                        </a>
-                    </div>
-
-                    {% if speldorf_home_games %}
-                        <div class="row g-3">
-                            {% for game in speldorf_home_games %}
-                                <div class="col-12">
-                                    <div class="card game-card shadow-sm home-game">
-                                        <div class="card-body">
-                                            <div class="row align-items-center">
-                                                <div class="col-md-2">
-                                                    <div class="text-center">
-                                                        <div class="fw-bold">{{ game.game_date|date:"D, d.m.Y" }}</div>
-                                                        <small class="text-muted">{{ game.time }} Uhr</small>
-                                                        <div class="mt-1">
-                                                            <span class="badge bg-info text-dark">{{ game.game_type }}</span>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div class="col-md-7">
-                                                    <h5 class="mb-1">{{ game.home_team }} vs {{ game.away_team }}</h5>
-                                                </div>
-                                                <div class="col-md-3 text-center">
-                                                    {% if game.result %}
-                                                        <div class="fs-3 fw-bold text-success">{{ game.result }}</div>
-                                                    {% else %}
-                                                        <span class="badge badge-upcoming">Ausstehend</span>
-                                                    {% endif %}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            {% endfor %}
-                        </div>
-                    {% else %}
-                        <div class="alert alert-info">Keine Heimspiele gefunden.</div>
-                    {% endif %}
-                </div>
-            </div>
-        {% endif %}
+            <p class="mt-3 text-muted">Lade Fußball-Spielpläne...</p>
+        </div>
     </div>
 {% endblock %}

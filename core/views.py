@@ -66,6 +66,12 @@ def handball_games_data(request):
 
 
 def football_games(request):
+    # Initial page load - just show loading placeholder
+    return render(request, "core/football_games.html")
+
+
+def football_games_data(request):
+    # Async data loading for HTMX
     try:
         e2_junioren_games = get_erik_e2_junioren_next_games()
         speldorf_home_games = get_speldorf_next_home_games()
@@ -78,10 +84,10 @@ def football_games(request):
             "e2_junioren_url": e2_junioren_url,
             "vfb_speldorf_url": vfb_speldorf_url,
         }
-        return render(request, "core/football_games.html", context)
+        return render(request, "core/football_games_content.html", context)
     except (ConnectionError, TimeoutError, ValueError) as e:
         context = {"error": str(e)}
-        return render(request, "core/football_games.html", context)
+        return render(request, "core/football_games_content.html", context)
 
 
 def muelltermine(request):
