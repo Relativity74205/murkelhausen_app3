@@ -91,14 +91,20 @@ def football_games_data(request):
 
 
 def muelltermine(request):
+    # Initial page load - just show loading placeholder
+    return render(request, "core/muelltermine.html")
+
+
+def muelltermine_data(request):
+    # Async data loading for HTMX
     try:
         termine = get_muelltermine_for_home()
         wertstoffhof = get_wertstoffhof_oeffnungszeiten()
         context = {"termine": termine, "wertstoffhof": wertstoffhof}
-        return render(request, "core/muelltermine.html", context)
+        return render(request, "core/muelltermine_content.html", context)
     except (ConnectionError, TimeoutError, ValueError) as e:
         context = {"error": str(e)}
-        return render(request, "core/muelltermine.html", context)
+        return render(request, "core/muelltermine_content.html", context)
 
 
 def vertretungsplan(request):
