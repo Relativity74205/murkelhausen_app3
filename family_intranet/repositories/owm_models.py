@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import date, datetime
 
-from pydantic import Field, BaseModel
+from pydantic import BaseModel, Field
 
 from family_intranet.repositories.owm_functions import (
     _get_moon_phase_string,
