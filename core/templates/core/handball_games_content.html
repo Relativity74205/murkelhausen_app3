@@ -1,0 +1,159 @@
+{% if error %}
+    <div class="alert alert-danger" role="alert">
+        <h4 class="alert-heading">Fehler beim Laden der Daten</h4>
+        <p>{{ error }}</p>
+    </div>
+{% else %}
+    <!-- Tabs Navigation -->
+    <ul class="nav nav-tabs mb-4" id="teamTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="d-jugend-tab" data-bs-toggle="tab" data-bs-target="#d-jugend" type="button" role="tab" aria-controls="d-jugend" aria-selected="true">
+                D-Jugend
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="herren-tab" data-bs-toggle="tab" data-bs-target="#herren" type="button" role="tab" aria-controls="herren" aria-selected="false">
+                Erste Herren
+            </button>
+        </li>
+    </ul>
+
+    <!-- Tabs Content -->
+    <div class="tab-content" id="teamTabsContent">
+        <!-- D-Jugend Tab -->
+        <div class="tab-pane fade show active" id="d-jugend" role="tabpanel" aria-labelledby="d-jugend-tab">
+            <div class="d-flex justify-content-end mb-4">
+                <a href="{{ d_jugend_url }}" target="_blank" class="btn btn-outline-secondary btn-sm me-2">
+                    Mannschaft →
+                </a>
+                <a href="{{ d_jugend_gruppe_url }}" target="_blank" class="btn btn-outline-secondary btn-sm">
+                    Tabelle →
+                </a>
+            </div>
+
+        {% if d_jugend_games %}
+            <div class="row g-3">
+                {% for game in d_jugend_games %}
+                    <div class="col-12">
+                        <div class="card game-card shadow-sm {% if 'Saarn' in game.home_team %}home-game{% elif 'Saarn' in game.away_team %}away-game{% endif %}">
+                            <div class="card-body">
+                                <div class="row align-items-center">
+                                    <div class="col-md-2">
+                                        <div class="text-center">
+                                            <div class="fw-bold">{{ game.game_date_formatted }}</div>
+                                            {% if game.time and not game.spielfrei %}
+                                                <small class="text-muted">
+                                                    {{ game.time }} Uhr
+                                                    {% if game.time_original %}
+                                                        <br><span class="badge bg-warning text-dark">Verlegt</span>
+                                                    {% endif %}
+                                                </small>
+                                            {% endif %}
+                                            {% if game.spielfrei %}
+                                                <span class="badge badge-spielfrei mt-1">Spielfrei</span>
+                                            {% endif %}
+                                            {% if 'Saarn' in game.home_team %}
+                                                <div class="mt-1"><span class="badge bg-success">Heim</span></div>
+                                            {% elif 'Saarn' in game.away_team %}
+                                                <div class="mt-1"><span class="badge bg-danger">Auswärts</span></div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-7">
+                                        <h5 class="mb-1">{{ game.home_team }} vs {{ game.away_team }}</h5>
+                                    </div>
+                                    <div class="col-md-3 text-center">
+                                        {% if game.result %}
+                                            <div class="fs-3 fw-bold text-success">{{ game.result }}</div>
+                                            {% if game.link_to_spielbericht %}
+                                                <a href="{{ game.link_to_spielbericht }}" target="_blank" class="btn btn-sm btn-outline-success mt-2">
+                                                    Spielbericht
+                                                    {% if game.spielbericht_genehmigt %}
+                                                        ✓
+                                                    {% endif %}
+                                                </a>
+                                            {% endif %}
+                                        {% else %}
+                                            <span class="badge badge-upcoming">Ausstehend</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="alert alert-info">Keine Spiele gefunden.</div>
+        {% endif %}
+        </div>
+
+        <!-- Erste Herren Tab -->
+        <div class="tab-pane fade" id="herren" role="tabpanel" aria-labelledby="herren-tab">
+            <div class="d-flex justify-content-end mb-4">
+                <a href="{{ erste_herren_url }}" target="_blank" class="btn btn-outline-secondary btn-sm me-2">
+                    Mannschaft →
+                </a>
+                <a href="{{ erste_herren_gruppe_url }}" target="_blank" class="btn btn-outline-secondary btn-sm">
+                    Tabelle →
+                </a>
+            </div>
+
+        {% if erste_herren_games %}
+            <div class="row g-3">
+                {% for game in erste_herren_games %}
+                    <div class="col-12">
+                        <div class="card game-card shadow-sm {% if 'Saarn' in game.home_team %}home-game{% elif 'Saarn' in game.away_team %}away-game{% endif %}">
+                            <div class="card-body">
+                                <div class="row align-items-center">
+                                    <div class="col-md-2">
+                                        <div class="text-center">
+                                            <div class="fw-bold">{{ game.game_date_formatted }}</div>
+                                            {% if game.time and not game.spielfrei %}
+                                                <small class="text-muted">
+                                                    {{ game.time }} Uhr
+                                                    {% if game.time_original %}
+                                                        <br><span class="badge bg-warning text-dark">Verlegt</span>
+                                                    {% endif %}
+                                                </small>
+                                            {% endif %}
+                                            {% if game.spielfrei %}
+                                                <span class="badge badge-spielfrei mt-1">Spielfrei</span>
+                                            {% endif %}
+                                            {% if 'Saarn' in game.home_team %}
+                                                <div class="mt-1"><span class="badge bg-success">Heim</span></div>
+                                            {% elif 'Saarn' in game.away_team %}
+                                                <div class="mt-1"><span class="badge bg-danger">Auswärts</span></div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-7">
+                                        <h5 class="mb-1">{{ game.home_team }} vs {{ game.away_team }}</h5>
+                                    </div>
+                                    <div class="col-md-3 text-center">
+                                        {% if game.result %}
+                                            <div class="fs-3 fw-bold text-success">{{ game.result }}</div>
+                                            {% if game.link_to_spielbericht %}
+                                                <a href="{{ game.link_to_spielbericht }}" target="_blank" class="btn btn-sm btn-outline-success mt-2">
+                                                    Spielbericht
+                                                    {% if game.spielbericht_genehmigt %}
+                                                        ✓
+                                                    {% endif %}
+                                                </a>
+                                            {% endif %}
+                                        {% else %}
+                                            <span class="badge badge-upcoming">Ausstehend</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="alert alert-info">Keine Spiele gefunden.</div>
+        {% endif %}
+        </div>
+    </div>
+{% endif %}

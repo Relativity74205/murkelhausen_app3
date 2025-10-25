@@ -37,6 +37,12 @@ def home(request):
 
 
 def handball_games(request):
+    # Initial page load - just show loading placeholder
+    return render(request, "core/handball_games.html")
+
+
+def handball_games_data(request):
+    # Async data loading for HTMX
     try:
         d_jugend_games = get_djk_saarn_d_jugend()
         erste_herren_games = get_djk_saarn_erste_herren()
@@ -53,10 +59,10 @@ def handball_games(request):
             "erste_herren_url": erste_herren_url,
             "erste_herren_gruppe_url": erste_herren_gruppe_url,
         }
-        return render(request, "core/handball_games.html", context)
+        return render(request, "core/handball_games_content.html", context)
     except (ConnectionError, TimeoutError, ValueError) as e:
         context = {"error": str(e)}
-        return render(request, "core/handball_games.html", context)
+        return render(request, "core/handball_games_content.html", context)
 
 
 def football_games(request):
