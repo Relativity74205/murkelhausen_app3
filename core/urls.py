@@ -11,6 +11,9 @@ urlpatterns = [
     path("muell/", views.muelltermine, name="muelltermine"),
     path("muell/data/", views.muelltermine_data, name="muelltermine_data"),
     path("vertretungsplan/", views.vertretungsplan, name="vertretungsplan"),
+    path(
+        "vertretungsplan/data/", views.vertretungsplan_data, name="vertretungsplan_data"
+    ),
     path("weather/", views.weather, name="weather"),
     path("pihole/status/", views.pihole_status, name="pihole_status"),
     path("pihole/disable/", views.pihole_disable, name="pihole_disable"),

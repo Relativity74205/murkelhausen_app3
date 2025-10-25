@@ -1,0 +1,284 @@
+<style>
+    .event-card {
+        transition: transform 0.2s;
+    }
+    .event-card:hover {
+        transform: translateY(-3px);
+    }
+    .badge-canceled {
+        background-color: #dc3545;
+    }
+    .badge-substitution {
+        background-color: #ffc107;
+        color: #000;
+    }
+    .info-box {
+        background-color: #e7f3ff;
+        border-left: 4px solid #0d6efd;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    .date-selector {
+        margin-bottom: 2rem;
+    }
+</style>
+
+        {% if error %}
+            <div class="alert alert-danger" role="alert">
+                <h4 class="alert-heading">Fehler beim Laden der Daten</h4>
+                <p>{{ error }}</p>
+            </div>
+        {% else %}
+            <!-- Date Selector -->
+            {% if available_dates %}
+                <div class="date-selector">
+                    <label for="dateSelect" class="form-label fw-bold">Datum auswählen:</label>
+                    <select class="form-select" id="dateSelect" onchange="window.location.href='?date=' + this.value">
+                        {% for date in available_dates %}
+                            <option value="{{ date.isoformat }}" {% if date == selected_date %}selected{% endif %}>
+                                {{ date|date:"D, d.m.Y" }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            {% endif %}
+
+            {% if vertretungsplan_mattis %}
+                <!-- Header with Timestamp -->
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="col-md-8">
+                                <h3 class="mb-0">{{ vertretungsplan_mattis.datum }}</h3>
+                            </div>
+                            <div class="col-md-4 text-md-end">
+                                <small class="text-muted">
+                                    Aktualisiert: {{ vertretungsplan_mattis.timestamp_aktualisiert }}
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- General Information -->
+                {% if vertretungsplan_mattis.infos_present %}
+                    <div class="info-box">
+                        <h5 class="mb-3">ℹ️ Allgemeine Informationen</h5>
+                        <ul class="mb-0">
+                            {% for info in vertretungsplan_mattis.infos %}
+                                <li>{{ info }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                {% endif %}
+
+                <!-- Tabs Navigation -->
+                <ul class="nav nav-tabs mb-4" id="vertretungsplanTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="mattis-tab" data-bs-toggle="tab" data-bs-target="#mattis" type="button" role="tab" aria-controls="mattis" aria-selected="true">
+                            Mattis
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="alle-tab" data-bs-toggle="tab" data-bs-target="#alle" type="button" role="tab" aria-controls="alle" aria-selected="false">
+                            Gesamte Schule
+                        </button>
+                    </li>
+                </ul>
+
+                <!-- Tabs Content -->
+                <div class="tab-content" id="vertretungsplanTabsContent">
+                    <!-- Mattis Tab -->
+                    <div class="tab-pane fade show active" id="mattis" role="tabpanel" aria-labelledby="mattis-tab">
+                        {% if vertretungsplan_mattis.events_present %}
+                            <h4 class="mb-3">Vertretungen für Mattis</h4>
+                            <div class="row g-3">
+                                {% for event in vertretungsplan_mattis.events %}
+                            <div class="col-12">
+                                <div class="card event-card shadow-sm {% if event.canceled == 'true' %}border-danger{% endif %}">
+                                    <div class="card-body">
+                                        <div class="row align-items-center">
+                                            <div class="col-md-2">
+                                                <div class="text-center">
+                                                    <div class="fw-bold">{{ event.lessons }}. Stunde</div>
+                                                    <small class="text-muted">{{ event.classes }}</small>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-10">
+                                                <div class="row g-2">
+                                                    <!-- Subject -->
+                                                    <div class="col-md-3">
+                                                        <small class="text-muted d-block">Fach:</small>
+                                                        {% if event.subject %}
+                                                            <strong>{{ event.subject }}</strong>
+                                                            {% if event.previousSubject and event.previousSubject != event.subject %}
+                                                                <small class="text-muted">(vorher: {{ event.previousSubject }})</small>
+                                                            {% endif %}
+                                                        {% elif event.previousSubject %}
+                                                            <span class="text-decoration-line-through">{{ event.previousSubject }}</span>
+                                                        {% else %}
+                                                            <span class="text-muted">-</span>
+                                                        {% endif %}
+                                                    </div>
+
+                                                    <!-- Teacher -->
+                                                    <div class="col-md-3">
+                                                        <small class="text-muted d-block">Lehrer:</small>
+                                                        {% if event.teacher %}
+                                                            <strong>{{ event.teacher }}</strong>
+                                                            {% if event.previousTeacher and event.previousTeacher != event.teacher %}
+                                                                <small class="text-muted">(vorher: {{ event.previousTeacher }})</small>
+                                                            {% endif %}
+                                                        {% elif event.previousTeacher %}
+                                                            <span class="text-decoration-line-through">{{ event.previousTeacher }}</span>
+                                                        {% else %}
+                                                            <span class="text-muted">-</span>
+                                                        {% endif %}
+                                                    </div>
+
+                                                    <!-- Room -->
+                                                    <div class="col-md-3">
+                                                        <small class="text-muted d-block">Raum:</small>
+                                                        {% if event.room %}
+                                                            <strong>{{ event.room }}</strong>
+                                                            {% if event.previousRoom and event.previousRoom != event.room %}
+                                                                <small class="text-muted">(vorher: {{ event.previousRoom }})</small>
+                                                            {% endif %}
+                                                        {% elif event.previousRoom %}
+                                                            <span class="text-decoration-line-through">{{ event.previousRoom }}</span>
+                                                        {% else %}
+                                                            <span class="text-muted">-</span>
+                                                        {% endif %}
+                                                    </div>
+
+                                                    <!-- Status -->
+                                                    <div class="col-md-3">
+                                                        {% if event.canceled == "true" %}
+                                                            <span class="badge badge-canceled">Entfällt</span>
+                                                        {% else %}
+                                                            <span class="badge badge-substitution">Vertretung</span>
+                                                        {% endif %}
+                                                    </div>
+                                                </div>
+
+                                                <!-- Comment -->
+                                                {% if event.comment %}
+                                                    <div class="mt-2">
+                                                        <small class="text-muted">Bemerkung:</small>
+                                                        <p class="mb-0">{{ event.comment }}</p>
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <div class="alert alert-success" role="alert">
+                                <h5 class="alert-heading">✅ Keine Vertretungen</h5>
+                                <p class="mb-0">Für Mattis gibt es an diesem Tag keine Vertretungen. Unterricht findet wie geplant statt!</p>
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Alle Tab -->
+                    <div class="tab-pane fade" id="alle" role="tabpanel" aria-labelledby="alle-tab">
+                        {% if vertretungsplan_full.events_present %}
+                            <h4 class="mb-3">Alle Vertretungen</h4>
+                            <div class="row g-3">
+                                {% for event in vertretungsplan_full.events %}
+                                    <div class="col-12">
+                                        <div class="card event-card shadow-sm {% if event.canceled == 'true' %}border-danger{% endif %}">
+                                            <div class="card-body">
+                                                <div class="row align-items-center">
+                                                    <div class="col-md-2">
+                                                        <div class="text-center">
+                                                            <div class="fw-bold">{{ event.lessons }}. Stunde</div>
+                                                            <small class="text-muted">{{ event.classes }}</small>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-10">
+                                                        <div class="row g-2">
+                                                            <!-- Subject -->
+                                                            <div class="col-md-3">
+                                                                <small class="text-muted d-block">Fach:</small>
+                                                                {% if event.subject %}
+                                                                    <strong>{{ event.subject }}</strong>
+                                                                    {% if event.previousSubject and event.previousSubject != event.subject %}
+                                                                        <small class="text-muted">(vorher: {{ event.previousSubject }})</small>
+                                                                    {% endif %}
+                                                                {% elif event.previousSubject %}
+                                                                    <span class="text-decoration-line-through">{{ event.previousSubject }}</span>
+                                                                {% else %}
+                                                                    <span class="text-muted">-</span>
+                                                                {% endif %}
+                                                            </div>
+
+                                                            <!-- Teacher -->
+                                                            <div class="col-md-3">
+                                                                <small class="text-muted d-block">Lehrer:</small>
+                                                                {% if event.teacher %}
+                                                                    <strong>{{ event.teacher }}</strong>
+                                                                    {% if event.previousTeacher and event.previousTeacher != event.teacher %}
+                                                                        <small class="text-muted">(vorher: {{ event.previousTeacher }})</small>
+                                                                    {% endif %}
+                                                                {% elif event.previousTeacher %}
+                                                                    <span class="text-decoration-line-through">{{ event.previousTeacher }}</span>
+                                                                {% else %}
+                                                                    <span class="text-muted">-</span>
+                                                                {% endif %}
+                                                            </div>
+
+                                                            <!-- Room -->
+                                                            <div class="col-md-3">
+                                                                <small class="text-muted d-block">Raum:</small>
+                                                                {% if event.room %}
+                                                                    <strong>{{ event.room }}</strong>
+                                                                    {% if event.previousRoom and event.previousRoom != event.room %}
+                                                                        <small class="text-muted">(vorher: {{ event.previousRoom }})</small>
+                                                                    {% endif %}
+                                                                {% elif event.previousRoom %}
+                                                                    <span class="text-decoration-line-through">{{ event.previousRoom }}</span>
+                                                                {% else %}
+                                                                    <span class="text-muted">-</span>
+                                                                {% endif %}
+                                                            </div>
+
+                                                            <!-- Status -->
+                                                            <div class="col-md-3">
+                                                                {% if event.canceled == "true" %}
+                                                                    <span class="badge badge-canceled">Entfällt</span>
+                                                                {% else %}
+                                                                    <span class="badge badge-substitution">Vertretung</span>
+                                                                {% endif %}
+                                                            </div>
+                                                        </div>
+
+                                                        <!-- Comment -->
+                                                        {% if event.comment %}
+                                                            <div class="mt-2">
+                                                                <small class="text-muted">Bemerkung:</small>
+                                                                <p class="mb-0">{{ event.comment }}</p>
+                                                            </div>
+                                                        {% endif %}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <div class="alert alert-success" role="alert">
+                                <h5 class="alert-heading">✅ Keine Vertretungen</h5>
+                                <p class="mb-0">Es gibt an diesem Tag keine Vertretungen. Unterricht findet wie geplant statt!</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            {% else %}
+                <div class="alert alert-info">Keine Daten verfügbar.</div>
+            {% endif %}
+        {% endif %}

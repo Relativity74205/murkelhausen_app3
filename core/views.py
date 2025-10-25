@@ -108,6 +108,12 @@ def muelltermine_data(request):
 
 
 def vertretungsplan(request):
+    # Initial page load - just show loading placeholder
+    return render(request, "core/vertretungsplan.html")
+
+
+def vertretungsplan_data(request):
+    # Async data loading for HTMX
     try:
         # Get available dates
         available_dates = get_vertretungsplan_dates()
@@ -132,10 +138,10 @@ def vertretungsplan(request):
             "vertretungsplan_mattis": vertretungsplan_mattis,
             "vertretungsplan_full": vertretungsplan_full,
         }
-        return render(request, "core/vertretungsplan.html", context)
+        return render(request, "core/vertretungsplan_content.html", context)
     except (ConnectionError, TimeoutError, ValueError) as e:
         context = {"error": str(e)}
-        return render(request, "core/vertretungsplan.html", context)
+        return render(request, "core/vertretungsplan_content.html", context)
 
 
 def pihole_status(request):  # noqa: ARG001
