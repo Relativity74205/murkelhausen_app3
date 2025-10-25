@@ -10,6 +10,7 @@
 
     <!-- Highcharts for charts -->
     <script src="https://code.highcharts.com/highcharts.js"></script>
+    <script src="https://code.highcharts.com/highcharts-more.js"></script>
 
     <style>
         .weather-icon {
@@ -330,17 +331,18 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
     {% if not error and weather %}
+    {% load l10n %}
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             {% if weather.minutely %}
             // Short term rain forecast (1 hour - minutely)
             const minutelyData = [
                 {% for minute in weather.minutely %}
-                ['{{ minute.time }}', {{ minute.rain }}],
+                ['{{ minute.time }}', {% localize off %}{{ minute.rain }}{% endlocalize %}],
                 {% endfor %}
             ];
 
-            const maxRain = {{ weather.max_rain_minutely }};
+            const maxRain = {% localize off %}{{ weather.max_rain_minutely }}{% endlocalize %};
 
             Highcharts.chart('container_weather_short_term', {
                 chart: { type: 'column' },
@@ -367,91 +369,232 @@
             // Middle term forecast (48 hours)
             const hourlyTemp = [
                 {% for hour in weather.hourly|slice:":48" %}
-                ['{{ hour.time }}', {{ hour.temp }}],
+                ['{{ hour.datetime }}', {% localize off %}{{ hour.temp }}{% endlocalize %}],
                 {% endfor %}
             ];
 
+            const hourlyFeelsLike = [
+                {% for hour in weather.hourly|slice:":48" %}
+                ['{{ hour.datetime }}', {% localize off %}{{ hour.feels_like }}{% endlocalize %}],
+                {% endfor %}
+            ];
+
+            function getRainColor(rain) {
+                if (rain >= 50) {  // sehr starker Regen
+                    return "rgba(255,50,50,0.9)";
+                } else if (rain >= 10) {  // starker Regen
+                    return "rgba(0,0,255,0.9)";
+                } else if (rain >= 2.5) {  // maessiger Regen
+                    return "rgba(50,50,255,0.75)";
+                } else if (rain >= 1) {  // leichter Regen
+                    return "rgba(100,100,255,0.5)";
+                } else if (rain >= 0.5) {  // sehr leichter Regen
+                    return "rgba(200,200,255,0.5)";
+                } else {  // minimaler Regen
+                    return "rgba(200,200,255,0.25)";
+                }
+            }
+
             const hourlyRain = [
                 {% for hour in weather.hourly|slice:":48" %}
-                ['{{ hour.time }}', {{ hour.rain }}],
+                {
+                    x: {{ forloop.counter0 }},
+                    y: {% localize off %}{{ hour.rain }}{% endlocalize %},
+                    color: getRainColor({% localize off %}{{ hour.rain }}{% endlocalize %})
+                },
+                {% endfor %}
+            ];
+
+            const hourlyPop = [
+                {% for hour in weather.hourly|slice:":48" %}
+                {
+                    x: {{ forloop.counter0 }},
+                    y: 0,
+                    z: {% localize off %}{{ hour.pop }}{% endlocalize %} * 100,
+                    name: '{{ hour.datetime }}'
+                },
                 {% endfor %}
             ];
 
             Highcharts.chart('container_weather_middle_term', {
                 chart: { zoomType: 'xy' },
-                title: { text: 'Vorhersage 48 Stunden' },
+                title: { text: 'Vorhersage für die nächsten 48 Stunden' },
                 xAxis: {
                     type: 'category',
-                    labels: { step: 3 }
+                    labels: {
+                        step: 2,
+                        rotation: -45,
+                        align: 'right'
+                    }
                 },
                 yAxis: [{
-                    title: { text: 'Temperatur (°C)' },
-                    opposite: false
+                    title: { text: 'Temperatur in °C' },
+                    opposite: false,
+                    gridLineWidth: 1
                 }, {
-                    title: { text: 'Regen (mm/h)' },
-                    opposite: true
+                    title: { text: 'Regen in mm/h' },
+                    opposite: true,
+                    min: 0,
+                    gridLineWidth: 0
                 }],
                 series: [{
                     name: 'Temperatur',
-                    type: 'line',
+                    type: 'spline',
                     data: hourlyTemp,
-                    tooltip: { valueSuffix: ' °C' }
+                    tooltip: { valueSuffix: ' °C' },
+                    color: 'red',
+                    marker: { enabled: false },
+                    showInLegend: true
                 }, {
-                    name: 'Regen',
+                    name: 'Gefühlte Temperatur',
+                    type: 'spline',
+                    data: hourlyFeelsLike,
+                    tooltip: { valueSuffix: ' °C' },
+                    color: 'orange',
+                    marker: { enabled: false },
+                    showInLegend: true
+                }, {
+                    name: 'Erwarteter Regen',
                     type: 'column',
                     yAxis: 1,
-                    data: hourlyRain,
-                    tooltip: { valueSuffix: ' mm/h' }
-                }]
+                    data: hourlyRain.map((item, index) => ({
+                        x: item.x,
+                        y: item.y,
+                        color: item.color,
+                        name: hourlyTemp[index][0]
+                    })),
+                    tooltip: { valueSuffix: ' mm/h' },
+                    colorByPoint: true,
+                    pointWidth: 15,
+                    showInLegend: false
+                }, {
+                    name: 'Regenwahrscheinlichkeit',
+                    type: 'bubble',
+                    yAxis: 1,
+                    data: hourlyPop,
+                    tooltip: {
+                        headerFormat: '',
+                        pointFormat: '{point.name}<br/>Regenwahrscheinlichkeit: {point.z:.0f}%'
+                    },
+                    color: 'blue',
+                    minSize: 0,
+                    maxSize: 15,
+                    zMin: 0,
+                    zMax: 100,
+                    showInLegend: false
+                }],
+                legend: {
+                    enabled: true,
+                    layout: 'horizontal',
+                    align: 'center',
+                    verticalAlign: 'bottom'
+                }
             });
 
             // Long term forecast (7 days)
             const dailyTempMin = [
                 {% for day in weather.daily %}
-                ['{{ day.day }}', {{ day.temp.min }}],
+                ['{{ day.day|date:"M. j, Y" }}', {% localize off %}{{ day.temp.min }}{% endlocalize %}],
                 {% endfor %}
             ];
 
             const dailyTempMax = [
                 {% for day in weather.daily %}
-                ['{{ day.day }}', {{ day.temp.max }}],
+                ['{{ day.day|date:"M. j, Y" }}', {% localize off %}{{ day.temp.max }}{% endlocalize %}],
                 {% endfor %}
             ];
 
             const dailyRain = [
                 {% for day in weather.daily %}
-                ['{{ day.day }}', {{ day.rain }}],
+                {
+                    x: {{ forloop.counter0 }},
+                    y: {% localize off %}{{ day.rain }}{% endlocalize %},
+                    color: getRainColor({% localize off %}{{ day.rain }}{% endlocalize %})
+                },
+                {% endfor %}
+            ];
+
+            const dailyPop = [
+                {% for day in weather.daily %}
+                {
+                    x: {{ forloop.counter0 }},
+                    y: 0,
+                    z: {% localize off %}{{ day.pop }}{% endlocalize %} * 100,
+                    name: '{{ day.day|date:"M. j, Y" }}'
+                },
                 {% endfor %}
             ];
 
             Highcharts.chart('container_weather_long_term', {
                 chart: { zoomType: 'xy' },
-                title: { text: 'Vorhersage 7 Tage' },
+                title: { text: 'Vorhersage für die nächsten 7 Tage' },
                 xAxis: { type: 'category' },
                 yAxis: [{
-                    title: { text: 'Temperatur (°C)' },
-                    opposite: false
+                    title: { text: 'Temperatur in °C' },
+                    opposite: false,
+                    gridLineWidth: 1
                 }, {
-                    title: { text: 'Regen (mm)' },
-                    opposite: true
+                    title: { text: 'Regen in mm/h' },
+                    opposite: true,
+                    min: 0,
+                    gridLineWidth: 0
                 }],
                 series: [{
-                    name: 'Temperatur Min',
-                    type: 'line',
-                    data: dailyTempMin,
-                    tooltip: { valueSuffix: ' °C' }
-                }, {
-                    name: 'Temperatur Max',
-                    type: 'line',
+                    name: 'Temperatur Maximum',
+                    type: 'spline',
                     data: dailyTempMax,
-                    tooltip: { valueSuffix: ' °C' }
+                    tooltip: { valueSuffix: ' °C' },
+                    color: 'rgba(255, 99, 132, 0.9)',
+                    fillOpacity: 0.3,
+                    marker: { enabled: false },
+                    showInLegend: true
                 }, {
-                    name: 'Regen',
+                    name: 'Temperatur Minimum',
+                    type: 'areaspline',
+                    data: dailyTempMin,
+                    tooltip: { valueSuffix: ' °C' },
+                    color: 'rgba(255, 99, 132, 0.9)',
+                    fillColor: 'rgba(255, 99, 132, 0.5)',
+                    fillOpacity: 0.5,
+                    marker: { enabled: false },
+                    linkedTo: ':previous',
+                    showInLegend: true
+                }, {
+                    name: 'Erwarteter Regen',
                     type: 'column',
                     yAxis: 1,
-                    data: dailyRain,
-                    tooltip: { valueSuffix: ' mm' }
-                }]
+                    data: dailyRain.map((item, index) => ({
+                        x: item.x,
+                        y: item.y,
+                        color: item.color,
+                        name: dailyTempMax[index][0]
+                    })),
+                    tooltip: { valueSuffix: ' mm' },
+                    colorByPoint: true,
+                    pointWidth: 30,
+                    showInLegend: false
+                }, {
+                    name: 'Regenwahrscheinlichkeit',
+                    type: 'bubble',
+                    yAxis: 1,
+                    data: dailyPop,
+                    tooltip: {
+                        headerFormat: '',
+                        pointFormat: '{point.name}<br/>Regenwahrscheinlichkeit: {point.z:.0f}%'
+                    },
+                    color: 'blue',
+                    minSize: 0,
+                    maxSize: 30,
+                    zMin: 0,
+                    zMax: 100,
+                    showInLegend: false
+                }],
+                legend: {
+                    enabled: true,
+                    layout: 'horizontal',
+                    align: 'center',
+                    verticalAlign: 'bottom'
+                }
             });
         });
     </script>

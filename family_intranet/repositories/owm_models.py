@@ -143,6 +143,10 @@ class HourlyItem(BaseModel):
         return _unix_timestamp_to_met_hour(self.dt)
 
     @property
+    def datetime(self) -> str:
+        return _unix_timestamp_to_met_timestamp(self.dt)
+
+    @property
     def rain(self) -> float:
         if self.rain1h is None:
             return 0
