@@ -320,7 +320,66 @@
 
             <!-- Long Term Forecast (7 days) -->
             <div class="tab-pane fade" id="future_long_term" role="tabpanel" aria-labelledby="long-term-tab">
-                <div id="container_weather_long_term" style="width:100%; height:600px;"></div>
+                <!-- Chart View -->
+                <div id="container_weather_long_term" style="width:100%; height:600px;" class="mb-4"></div>
+
+                <!-- Card-based Daily Forecast -->
+                <h5 class="mb-3">Tagesübersicht</h5>
+                <div class="row g-3">
+                    {% for day in weather.daily %}
+                    <div class="col-md-6 col-lg-3">
+                        <div class="card h-100">
+                            <div class="card-header text-center {% if forloop.counter == 1 %}bg-primary text-white{% endif %}">
+                                <strong>{{ day.day|date:"l, j. F" }}</strong>
+                            </div>
+                            <div class="card-body">
+                                <div class="text-center mb-2">
+                                    <img src="https://openweathermap.org/img/wn/{{ day.weather.0.icon }}@2x.png"
+                                         style="width: 60px; height: 60px;"
+                                         alt="{{ day.weather.0.description }}">
+                                    <div><small>{{ day.weather.0.description|title }}</small></div>
+                                </div>
+
+                                <div class="mb-2">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="text-muted small">🌡️ Temperatur</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between">
+                                        <span><strong class="text-danger">{{ day.temp.max|floatformat:1 }}°C</strong></span>
+                                        <span class="text-muted">{{ day.temp.min|floatformat:1 }}°C</span>
+                                    </div>
+                                    <small class="text-muted">Gefühlt: {{ day.feels_like.day|floatformat:1 }}°C</small>
+                                </div>
+
+                                <hr class="my-2">
+
+                                <div class="small">
+                                    <div class="d-flex justify-content-between mb-1">
+                                        <span>💧 Regen:</span>
+                                        <strong>{{ day.rain|floatformat:1 }} mm</strong>
+                                    </div>
+                                    <div class="d-flex justify-content-between mb-1">
+                                        <span>🌧️ Wahrsch.:</span>
+                                        <strong>{{ day.pop_unit }}</strong>
+                                    </div>
+                                    <div class="d-flex justify-content-between mb-1">
+                                        <span>💨 Wind:</span>
+                                        <strong>{{ day.wind_speed_unit }} {{ day.wind_direction }}</strong>
+                                    </div>
+                                    <div class="d-flex justify-content-between mb-1">
+                                        <span>☁️ Bewölkung:</span>
+                                        <strong>{{ day.clouds_unit }}</strong>
+                                    </div>
+                                    <div class="d-flex justify-content-between">
+                                        <span>🌡️ Luftdruck:</span>
+                                        <strong>{{ day.pressure_unit }}</strong>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
             </div>
         </div>
 
@@ -424,7 +483,12 @@
                     labels: {
                         step: 2,
                         rotation: -45,
-                        align: 'right'
+                        align: 'right',
+                        formatter: function() {
+                            // Extract time from datetime string (format: "DD.MM.YYYY HH:MM")
+                            var parts = this.value.split(' ');
+                            return parts.length > 1 ? parts[1] : this.value;
+                        }
                     }
                 },
                 yAxis: [{
@@ -476,7 +540,7 @@
                         headerFormat: '',
                         pointFormat: '{point.name}<br/>Regenwahrscheinlichkeit: {point.z:.0f}%'
                     },
-                    color: 'blue',
+                    color: 'rgba(0, 0, 255, 0.4)',
                     minSize: 0,
                     maxSize: 15,
                     zMin: 0,
@@ -545,20 +609,23 @@
                     data: dailyTempMax,
                     tooltip: { valueSuffix: ' °C' },
                     color: 'rgba(255, 99, 132, 0.9)',
-                    fillOpacity: 0.3,
+                    lineWidth: 2,
                     marker: { enabled: false },
-                    showInLegend: true
+                    showInLegend: true,
+                    zIndex: 2
                 }, {
                     name: 'Temperatur Minimum',
-                    type: 'areaspline',
-                    data: dailyTempMin,
-                    tooltip: { valueSuffix: ' °C' },
+                    type: 'areasplinerange',
+                    data: dailyTempMin.map((item, index) => [item[0], item[1], dailyTempMax[index][1]]),
+                    tooltip: {
+                        pointFormat: '<span style="color:{series.color}">●</span> {series.name}: <b>{point.low:.1f}°C - {point.high:.1f}°C</b><br/>'
+                    },
                     color: 'rgba(255, 99, 132, 0.9)',
                     fillColor: 'rgba(255, 99, 132, 0.5)',
-                    fillOpacity: 0.5,
+                    lineWidth: 2,
                     marker: { enabled: false },
-                    linkedTo: ':previous',
-                    showInLegend: true
+                    showInLegend: true,
+                    zIndex: 1
                 }, {
                     name: 'Erwarteter Regen',
                     type: 'column',
@@ -571,7 +638,7 @@
                     })),
                     tooltip: { valueSuffix: ' mm' },
                     colorByPoint: true,
-                    pointWidth: 30,
+                    pointWidth: 60,
                     showInLegend: false
                 }, {
                     name: 'Regenwahrscheinlichkeit',
@@ -582,9 +649,9 @@
                         headerFormat: '',
                         pointFormat: '{point.name}<br/>Regenwahrscheinlichkeit: {point.z:.0f}%'
                     },
-                    color: 'blue',
+                    color: 'rgba(0, 0, 255, 0.4)',
                     minSize: 0,
-                    maxSize: 30,
+                    maxSize: 60,
                     zMin: 0,
                     zMax: 100,
                     showInLegend: false
