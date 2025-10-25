@@ -28,6 +28,7 @@ from family_intranet.repositories.mheg import (
     get_muelltermine_for_home,
     get_wertstoffhof_oeffnungszeiten,
 )
+from family_intranet.repositories.owm import get_weather_data_muelheim
 from family_intranet.repositories.pihole import MultiPiHoleRepository
 
 
@@ -160,3 +161,13 @@ def pihole_disable(request):  # noqa: ARG001
     except (ConnectionError, TimeoutError, ValueError) as e:
         logger.error(f"Pi-hole error: {e}", exc_info=True)
         return JsonResponse({"success": False, "error": str(e)}, status=500)
+
+
+def weather(request):
+    try:
+        weather_data, error = get_weather_data_muelheim()
+        context = {"error": error} if error else {"weather": weather_data}
+        return render(request, "core/weather.html", context)
+    except (ConnectionError, TimeoutError, ValueError) as e:
+        context = {"error": str(e)}
+        return render(request, "core/weather.html", context)

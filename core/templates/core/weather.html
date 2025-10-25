@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wetter in Mülheim - Murkelhausen Family</title>
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Highcharts for charts -->
+    <script src="https://code.highcharts.com/highcharts.js"></script>
+
+    <style>
+        .weather-icon {
+            width: 50px;
+            height: 50px;
+        }
+        .tab-content {
+            padding-top: 1.5rem;
+        }
+        .table-container table {
+            margin-bottom: 0;
+        }
+        .nested-table {
+            background-color: #f8f9fa;
+        }
+        iframe {
+            height: 100%;
+            width: 100%;
+            border: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="{% url 'home' %}">
+                🏠 Murkelhausen Family
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'home' %}">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'football_games' %}">Football</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'handball_games' %}">Handball</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'muelltermine' %}">Müll</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'vertretungsplan' %}">Vertretungsplan</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="{% url 'weather' %}">Wetter</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container my-4">
+        <h2>Wetter in Mülheim</h2>
+
+        {% if error %}
+        <div class="alert alert-danger" role="alert">
+            <strong>Fehler beim Laden der Wetterdaten:</strong> {{ error }}
+        </div>
+        {% else %}
+
+        <!-- Tab Navigation -->
+        <ul class="nav nav-tabs mt-4" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="current-tab" data-bs-toggle="tab" data-bs-target="#current"
+                        type="button" role="tab" aria-controls="current" aria-selected="true">
+                    aktuell
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="radar-tab" data-bs-toggle="tab" data-bs-target="#radar"
+                        type="button" role="tab" aria-controls="radar" aria-selected="false">
+                    Regen-Radar
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="short-term-tab" data-bs-toggle="tab" data-bs-target="#future_short_term"
+                        type="button" role="tab" aria-controls="future_short_term" aria-selected="false">
+                    Regen-Vorhersage 1 Stunde
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="middle-term-tab" data-bs-toggle="tab" data-bs-target="#future_middle_term"
+                        type="button" role="tab" aria-controls="future_middle_term" aria-selected="false">
+                    Vorhersage 48 Stunden
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="long-term-tab" data-bs-toggle="tab" data-bs-target="#future_long_term"
+                        type="button" role="tab" aria-controls="future_long_term" aria-selected="false">
+                    Vorhersage 7 Tage
+                </button>
+            </li>
+        </ul>
+
+        <!-- Tab Content -->
+        <div class="tab-content">
+            <!-- Current Weather Tab -->
+            <div class="tab-pane fade show active" id="current" role="tabpanel" aria-labelledby="current-tab">
+
+                <!-- Weather Alerts -->
+                {% if weather.alerts %}
+                <div class="alert alert-warning" role="alert">
+                    <h5 class="alert-heading"><strong>⚠️ DWD Wetter-Alarme</strong></h5>
+                    <ul class="mb-0">
+                        {% for alert in weather.alerts %}
+                        <li><strong>{{ alert.event }}</strong> von {{ alert.start_timestamp }} bis {{ alert.end_timestamp }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+
+                <!-- Current Weather Overview -->
+                <div class="row g-3 mb-4">
+                    <div class="col-md-6">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <div class="text-center mb-3">
+                                    <img src="https://openweathermap.org/img/wn/{{ weather.current.weather.0.icon }}@2x.png"
+                                         class="mb-2" style="width: 100px; height: 100px;"
+                                         alt="{{ weather.current.weather.0.description }}">
+                                    <h4>{{ weather.current.weather.0.description|title }}</h4>
+                                    <h2 class="display-4 mb-0">{{ weather.current.temp_unit }}</h2>
+                                    <p class="text-muted mb-0">Gefühlt {{ weather.current.feels_like_unit }}</p>
+                                </div>
+                                <hr>
+                                <div class="row g-2 small">
+                                    <div class="col-6">
+                                        <small class="text-muted">💧 Regen</small>
+                                        <div><strong>{{ weather.current.rain_unit|default:"Kein Regen" }}</strong></div>
+                                    </div>
+                                    <div class="col-6">
+                                        <small class="text-muted">Regenwahrsch.</small>
+                                        <div><strong>{{ weather.current_pop_unit }}</strong></div>
+                                    </div>
+                                    <div class="col-6">
+                                        <small class="text-muted">🌡️ Luftfeuchtigkeit</small>
+                                        <div><strong>{{ weather.current.humidity_unit }}</strong></div>
+                                    </div>
+                                    <div class="col-6">
+                                        <small class="text-muted">☁️ Bewölkung</small>
+                                        <div><strong>{{ weather.current.clouds_unit }}</strong></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h5 class="card-title mb-3">Weitere Details</h5>
+                                <div class="row g-2">
+                                    <div class="col-6">
+                                        <small class="text-muted">Sonnenaufgang</small>
+                                        <div><strong>{{ weather.current.sunrise_time }}</strong></div>
+                                    </div>
+                                    <div class="col-6">
+                                        <small class="text-muted">Sonnenuntergang</small>
+                                        <div><strong>{{ weather.current.sunset_time }}</strong></div>
+                                    </div>
+                                    <div class="col-6">
+                                        <small class="text-muted">Mondphase</small>
+                                        <div><strong>{{ weather.daily.0.moon_phase_string }}</strong></div>
+                                    </div>
+                                    <div class="col-6">
+                                        <small class="text-muted">UV Index</small>
+                                        <div><strong>{{ weather.current.uvi_unit }}</strong></div>
+                                    </div>
+                                    <div class="col-6">
+                                        <small class="text-muted">💨 Wind</small>
+                                        <div><strong>{{ weather.current.wind_speed_unit }} {{ weather.current.wind_direction }}</strong></div>
+                                    </div>
+                                    <div class="col-6">
+                                        <small class="text-muted">👁️ Sichtweite</small>
+                                        <div><strong>{{ weather.current.visibility_unit }}</strong></div>
+                                    </div>
+                                    <div class="col-6">
+                                        <small class="text-muted">🌫️ Luftdruck</small>
+                                        <div><strong>{{ weather.current.pressure_unit }}</strong></div>
+                                    </div>
+                                    <div class="col-6">
+                                        <small class="text-muted">💧 Taupunkt</small>
+                                        <div><strong>{{ weather.current.dew_point_unit }}</strong></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Today & Tomorrow Forecast -->
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0">📅 Heute</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <small class="text-muted">Temperatur</small>
+                                    <div class="d-flex justify-content-between">
+                                        <span>Morgens: <strong>{{ weather.daily.0.temp.morn_unit }}</strong></span>
+                                        <span>Tags: <strong>{{ weather.daily.0.temp.day_unit }}</strong></span>
+                                    </div>
+                                    <div class="d-flex justify-content-between">
+                                        <span>Abends: <strong>{{ weather.daily.0.temp.eve_unit }}</strong></span>
+                                        <span>Nachts: <strong>{{ weather.daily.0.temp.night_unit }}</strong></span>
+                                    </div>
+                                </div>
+                                <hr>
+                                <div class="mb-2">
+                                    <small class="text-muted">Gefühlte Temperatur</small>
+                                    <div class="d-flex justify-content-between">
+                                        <span>Morgens: <strong>{{ weather.daily.0.feels_like.morn_unit }}</strong></span>
+                                        <span>Tags: <strong>{{ weather.daily.0.feels_like.day_unit }}</strong></span>
+                                    </div>
+                                    <div class="d-flex justify-content-between">
+                                        <span>Abends: <strong>{{ weather.daily.0.feels_like.eve_unit }}</strong></span>
+                                        <span>Nachts: <strong>{{ weather.daily.0.feels_like.night_unit }}</strong></span>
+                                    </div>
+                                </div>
+                                <hr>
+                                <div class="row g-2 small">
+                                    <div class="col-6">Regen: <strong>{{ weather.daily.0.rain_unit|default:"—" }}</strong></div>
+                                    <div class="col-6">Schnee: <strong>{{ weather.daily.0.snow_unit|default:"—" }}</strong></div>
+                                    <div class="col-6">Regenwahrsch.: <strong>{{ weather.daily.0.pop_unit }}</strong></div>
+                                    <div class="col-6">Bewölkung: <strong>{{ weather.daily.0.clouds_unit }}</strong></div>
+                                    <div class="col-6">Wind: <strong>{{ weather.daily.0.wind_speed_unit }} {{ weather.daily.0.wind_direction }}</strong></div>
+                                    <div class="col-6">Luftdruck: <strong>{{ weather.daily.0.pressure_unit }}</strong></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0">📅 Morgen</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <small class="text-muted">Temperatur</small>
+                                    <div class="d-flex justify-content-between">
+                                        <span>Morgens: <strong>{{ weather.daily.1.temp.morn_unit }}</strong></span>
+                                        <span>Tags: <strong>{{ weather.daily.1.temp.day_unit }}</strong></span>
+                                    </div>
+                                    <div class="d-flex justify-content-between">
+                                        <span>Abends: <strong>{{ weather.daily.1.temp.eve_unit }}</strong></span>
+                                        <span>Nachts: <strong>{{ weather.daily.1.temp.night_unit }}</strong></span>
+                                    </div>
+                                </div>
+                                <hr>
+                                <div class="mb-2">
+                                    <small class="text-muted">Gefühlte Temperatur</small>
+                                    <div class="d-flex justify-content-between">
+                                        <span>Morgens: <strong>{{ weather.daily.1.feels_like.morn_unit }}</strong></span>
+                                        <span>Tags: <strong>{{ weather.daily.1.feels_like.day_unit }}</strong></span>
+                                    </div>
+                                    <div class="d-flex justify-content-between">
+                                        <span>Abends: <strong>{{ weather.daily.1.feels_like.eve_unit }}</strong></span>
+                                        <span>Nachts: <strong>{{ weather.daily.1.feels_like.night_unit }}</strong></span>
+                                    </div>
+                                </div>
+                                <hr>
+                                <div class="row g-2 small">
+                                    <div class="col-6">Regen: <strong>{{ weather.daily.1.rain_unit|default:"—" }}</strong></div>
+                                    <div class="col-6">Schnee: <strong>{{ weather.daily.1.snow_unit|default:"—" }}</strong></div>
+                                    <div class="col-6">Regenwahrsch.: <strong>{{ weather.daily.1.pop_unit }}</strong></div>
+                                    <div class="col-6">Bewölkung: <strong>{{ weather.daily.1.clouds_unit }}</strong></div>
+                                    <div class="col-6">Wind: <strong>{{ weather.daily.1.wind_speed_unit }} {{ weather.daily.1.wind_direction }}</strong></div>
+                                    <div class="col-6">Luftdruck: <strong>{{ weather.daily.1.pressure_unit }}</strong></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Radar Tab -->
+            <div class="tab-pane fade" id="radar" role="tabpanel" aria-labelledby="radar-tab">
+                <p style="text-align:center">
+                    <iframe src="https://www.rainviewer.com/map.html?loc=51.418568,6.884523,10&oFa=0&oC=true&oU=0&oCS=1&oF=0&oAP=0&c=2&o=83&lm=1&layer=radar&sm=1&sn=1&hu=false"
+                            width="75%" frameborder="0" style="border:0;height:75vh;" allowfullscreen></iframe>
+                </p>
+            </div>
+
+            <!-- Short Term Forecast (1 hour - minutely rain) -->
+            <div class="tab-pane fade" id="future_short_term" role="tabpanel" aria-labelledby="short-term-tab">
+                {% if weather.minutely %}
+                <div id="container_weather_short_term" style="width:100%; height:600px;"></div>
+                {% else %}
+                <div class="alert alert-info">Keine Minutendaten verfügbar</div>
+                {% endif %}
+            </div>
+
+            <!-- Middle Term Forecast (48 hours) -->
+            <div class="tab-pane fade" id="future_middle_term" role="tabpanel" aria-labelledby="middle-term-tab">
+                <div id="container_weather_middle_term" style="width:100%; height:600px;"></div>
+            </div>
+
+            <!-- Long Term Forecast (7 days) -->
+            <div class="tab-pane fade" id="future_long_term" role="tabpanel" aria-labelledby="long-term-tab">
+                <div id="container_weather_long_term" style="width:100%; height:600px;"></div>
+            </div>
+        </div>
+
+        {% endif %}
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    {% if not error and weather %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            {% if weather.minutely %}
+            // Short term rain forecast (1 hour - minutely)
+            const minutelyData = [
+                {% for minute in weather.minutely %}
+                ['{{ minute.time }}', {{ minute.rain }}],
+                {% endfor %}
+            ];
+
+            const maxRain = {{ weather.max_rain_minutely }};
+
+            Highcharts.chart('container_weather_short_term', {
+                chart: { type: 'column' },
+                title: { text: 'Regen-Vorhersage für die nächsten 60 Minuten' },
+                legend: { enabled: false },
+                xAxis: {
+                    type: 'category',
+                    labels: { step: 5 }
+                },
+                yAxis: {
+                    title: { text: 'Erwarteter Regen in mm/h' },
+                    min: 0,
+                    max: maxRain
+                },
+                series: [{
+                    name: 'Erwarteter Regen in mm/h',
+                    colorByPoint: true,
+                    data: minutelyData,
+                    tooltip: { valueDecimals: 1 }
+                }]
+            });
+            {% endif %}
+
+            // Middle term forecast (48 hours)
+            const hourlyTemp = [
+                {% for hour in weather.hourly|slice:":48" %}
+                ['{{ hour.time }}', {{ hour.temp }}],
+                {% endfor %}
+            ];
+
+            const hourlyRain = [
+                {% for hour in weather.hourly|slice:":48" %}
+                ['{{ hour.time }}', {{ hour.rain }}],
+                {% endfor %}
+            ];
+
+            Highcharts.chart('container_weather_middle_term', {
+                chart: { zoomType: 'xy' },
+                title: { text: 'Vorhersage 48 Stunden' },
+                xAxis: {
+                    type: 'category',
+                    labels: { step: 3 }
+                },
+                yAxis: [{
+                    title: { text: 'Temperatur (°C)' },
+                    opposite: false
+                }, {
+                    title: { text: 'Regen (mm/h)' },
+                    opposite: true
+                }],
+                series: [{
+                    name: 'Temperatur',
+                    type: 'line',
+                    data: hourlyTemp,
+                    tooltip: { valueSuffix: ' °C' }
+                }, {
+                    name: 'Regen',
+                    type: 'column',
+                    yAxis: 1,
+                    data: hourlyRain,
+                    tooltip: { valueSuffix: ' mm/h' }
+                }]
+            });
+
+            // Long term forecast (7 days)
+            const dailyTempMin = [
+                {% for day in weather.daily %}
+                ['{{ day.day }}', {{ day.temp.min }}],
+                {% endfor %}
+            ];
+
+            const dailyTempMax = [
+                {% for day in weather.daily %}
+                ['{{ day.day }}', {{ day.temp.max }}],
+                {% endfor %}
+            ];
+
+            const dailyRain = [
+                {% for day in weather.daily %}
+                ['{{ day.day }}', {{ day.rain }}],
+                {% endfor %}
+            ];
+
+            Highcharts.chart('container_weather_long_term', {
+                chart: { zoomType: 'xy' },
+                title: { text: 'Vorhersage 7 Tage' },
+                xAxis: { type: 'category' },
+                yAxis: [{
+                    title: { text: 'Temperatur (°C)' },
+                    opposite: false
+                }, {
+                    title: { text: 'Regen (mm)' },
+                    opposite: true
+                }],
+                series: [{
+                    name: 'Temperatur Min',
+                    type: 'line',
+                    data: dailyTempMin,
+                    tooltip: { valueSuffix: ' °C' }
+                }, {
+                    name: 'Temperatur Max',
+                    type: 'line',
+                    data: dailyTempMax,
+                    tooltip: { valueSuffix: ' °C' }
+                }, {
+                    name: 'Regen',
+                    type: 'column',
+                    yAxis: 1,
+                    data: dailyRain,
+                    tooltip: { valueSuffix: ' mm' }
+                }]
+            });
+        });
+    </script>
+    {% endif %}
+</body>
+</html>

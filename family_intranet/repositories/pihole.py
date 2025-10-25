@@ -1,20 +1,21 @@
 """Pi-hole API integration for DNS blocking control."""
 
-import os
 from datetime import UTC, datetime, timedelta
 
 import requests
 from pydantic import BaseModel
 
+from family_intranet import settings
+
 
 class PiHoleConfig:
     # Primary Pi-hole
-    PRIMARY_URL = os.getenv("PIHOLE_PRIMARY_URL", "http://rasp1.lan")
-    PRIMARY_PASSWORD = os.getenv("PIHOLE_PRIMARY_PASSWORD", "")
+    PRIMARY_URL = "http://rasp1.lan"
+    PRIMARY_PASSWORD = settings.PIHOLE_PRIMARY_PASSWORD
 
     # Backup Pi-hole
-    BACKUP_URL = os.getenv("PIHOLE_BACKUP_URL", "http://192.168.1.28")  # rasp2.lan doesn't work via mDNS at the moment for some reason
-    BACKUP_PASSWORD = os.getenv("PIHOLE_BACKUP_PASSWORD", "")
+    BACKUP_URL = "http://192.168.1.28"  # rasp2.lan doesn't work via mDNS at the moment for some reason
+    BACKUP_PASSWORD = settings.PIHOLE_BACKUP_PASSWORD
 
     TIMEOUT = 10
 
@@ -36,8 +37,7 @@ class PiHoleRepository:
     """Repository for interacting with Pi-hole API."""
 
     def __init__(self, base_url: str | None = None, password: str | None = None):
-        """Initialize Pi-hole repository.
-        """
+        """Initialize Pi-hole repository."""
         self.base_url = base_url
         self.password = password
         self.session = requests.Session()
@@ -54,9 +54,8 @@ class PiHoleRepository:
             TimeoutError: If request times out
             ValueError: If authentication fails
         """
-        if (
-            self.pi_hole_session
-            and self.pi_hole_session.valid_until > datetime.now(tz=UTC)
+        if self.pi_hole_session and self.pi_hole_session.valid_until > datetime.now(
+            tz=UTC
         ):
             return
 
@@ -163,7 +162,6 @@ class PiHoleRepository:
             raise ValueError(f"Invalid response from Pi-hole API: {e}") from e
 
 
-
 class MultiPiHoleRepository:
     """Repository for managing multiple Pi-hole instances (primary and backup)."""
 
@@ -200,7 +198,10 @@ class MultiPiHoleRepository:
         primary_blocking_status = self.primary.disable_blocking(duration_seconds)
         secondary_blocking_status = self.backup.disable_blocking(duration_seconds)
 
-        if primary_blocking_status.blocking is not False and primary_blocking_status.blocking != secondary_blocking_status.blocking:
+        if (
+            primary_blocking_status.blocking is not False
+            and primary_blocking_status.blocking != secondary_blocking_status.blocking
+        ):
             raise ValueError("Failed to disable blocking on one of the Pi-hole servers")
 
         return primary_blocking_status
