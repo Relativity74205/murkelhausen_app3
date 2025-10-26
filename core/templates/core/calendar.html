@@ -61,13 +61,90 @@
         <div class="container text-center">
             <h1 class="display-4 mb-3">📅 Familienkalender</h1>
             <p class="lead">Termine für die nächsten 7 Tage</p>
+            <button type="button" class="btn btn-light btn-lg mt-3" data-bs-toggle="modal" data-bs-target="#newAppointmentModal">
+                ➕ Neuer Termin
+            </button>
         </div>
     </section>
+
+    <!-- New Appointment Modal -->
+    <div class="modal fade" id="newAppointmentModal" tabindex="-1" aria-labelledby="newAppointmentModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="newAppointmentModalLabel">Neuer Termin erstellen</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form hx-post="{% url 'calendar_create' %}"
+                      hx-target="#appointment-message"
+                      hx-swap="innerHTML">
+                    {% csrf_token %}
+                    <div class="modal-body">
+                        <div id="appointment-message"></div>
+
+                        <div class="mb-3">
+                            <label for="calendar" class="form-label">Kalender</label>
+                            <select class="form-select" id="calendar" name="calendar" required>
+                                <option value="">Bitte wählen...</option>
+                                <option value="Arkadius">Arkadius</option>
+                                <option value="Familie">Familie</option>
+                                <option value="Erik">Erik</option>
+                                <option value="Mattis">Mattis</option>
+                                <option value="Andrea">Andrea</option>
+                                <option value="Geburtstage">Geburtstage</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="event_name" class="form-label">Terminname</label>
+                            <input type="text" class="form-control" id="event_name" name="event_name" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="start_date" class="form-label">Startdatum</label>
+                            <input type="date" class="form-control" id="start_date" name="start_date" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="start_time" class="form-label">Startzeit (optional)</label>
+                            <input type="time" class="form-control" id="start_time" name="start_time">
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="end_date" class="form-label">Enddatum</label>
+                            <input type="date" class="form-control" id="end_date" name="end_date" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="end_time" class="form-label">Endzeit (optional)</label>
+                            <input type="time" class="form-control" id="end_time" name="end_time">
+                        </div>
+
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" id="is_whole_day" name="is_whole_day">
+                            <label class="form-check-label" for="is_whole_day">
+                                Ganztägig
+                            </label>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Beschreibung (optional)</label>
+                            <textarea class="form-control" id="description" name="description" rows="3"></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Abbrechen</button>
+                        <button type="submit" class="btn btn-primary">Termin erstellen</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 
     <!-- Main Content -->
     <div class="container my-5" id="calendar-content"
          hx-get="{% url 'calendar_data' %}"
-         hx-trigger="load"
+         hx-trigger="load, refreshCalendar from:body"
          hx-swap="innerHTML">
         <!-- Loading Placeholder -->
         <div class="text-center py-5">
@@ -77,4 +154,153 @@
             <p class="mt-3 text-muted">Lade Termine...</p>
         </div>
     </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Handle form submission and modal closing -->
+    <script>
+        document.body.addEventListener('htmx:afterRequest', function(event) {
+            // Check if this was the create appointment form
+            if (event.detail.target.id === 'appointment-message') {
+                if (event.detail.successful) {
+                    const response = JSON.parse(event.detail.xhr.response);
+                    if (response.success) {
+                        // Show success message
+                        event.detail.target.innerHTML = '<div class="alert alert-success" role="alert">' +
+                            '✅ ' + response.message +
+                            '</div>';
+
+                        // Reset form
+                        event.detail.target.closest('form').reset();
+
+                        // Reload calendar data by dispatching custom event
+                        document.body.dispatchEvent(new Event('refreshCalendar'));
+
+                        // Close modal after 2 seconds
+                        setTimeout(() => {
+                            const modalElement = document.getElementById('newAppointmentModal');
+                            const modal = bootstrap.Modal.getInstance(modalElement);
+                            if (modal) {
+                                modal.hide();
+                            }
+
+                            // Remove any leftover backdrops (Bootstrap bug workaround)
+                            setTimeout(() => {
+                                const backdrops = document.querySelectorAll('.modal-backdrop');
+                                backdrops.forEach(backdrop => backdrop.remove());
+                                document.body.classList.remove('modal-open');
+                                document.body.style.overflow = '';
+                                document.body.style.paddingRight = '';
+
+                                // Clear message
+                                event.detail.target.innerHTML = '';
+                            }, 500);
+                        }, 2000);
+                    } else {
+                        // Show error message
+                        event.detail.target.innerHTML = '<div class="alert alert-danger" role="alert">' +
+                            '❌ Fehler: ' + response.error +
+                            '</div>';
+                    }
+                } else {
+                    // Network error
+                    event.detail.target.innerHTML = '<div class="alert alert-danger" role="alert">' +
+                        '❌ Netzwerkfehler beim Erstellen des Termins' +
+                        '</div>';
+                }
+            }
+        });
+
+        // Handle whole-day checkbox
+        document.getElementById('is_whole_day').addEventListener('change', function() {
+            const startTime = document.getElementById('start_time');
+            const endTime = document.getElementById('end_time');
+
+            if (this.checked) {
+                startTime.disabled = true;
+                endTime.disabled = true;
+                startTime.value = '';
+                endTime.value = '';
+            } else {
+                startTime.disabled = false;
+                endTime.disabled = false;
+            }
+        });
+
+        // Auto-fill end date when start date changes
+        document.getElementById('start_date').addEventListener('change', function() {
+            const endDate = document.getElementById('end_date');
+            if (!endDate.value) {
+                endDate.value = this.value;
+            }
+        });
+
+        // Handle delete button clicks with confirmation
+        document.addEventListener('click', function(event) {
+            if (event.target.classList.contains('delete-appointment-btn') ||
+                event.target.closest('.delete-appointment-btn')) {
+
+                const button = event.target.classList.contains('delete-appointment-btn')
+                    ? event.target
+                    : event.target.closest('.delete-appointment-btn');
+
+                const appointmentId = button.dataset.appointmentId;
+                const appointmentName = button.dataset.appointmentName;
+                const calendarName = button.dataset.calendarName;
+
+                // Show confirmation dialog
+                if (!confirm(`Möchten Sie den Termin "${appointmentName}" wirklich löschen?`)) {
+                    return;
+                }
+
+                // Disable button during deletion
+                button.disabled = true;
+                button.innerHTML = '⏳ Löschen...';
+
+                // Create form data
+                const formData = new FormData();
+                formData.append('appointment_id', appointmentId);
+                formData.append('calendar_name', calendarName);
+
+                // Get CSRF token
+                const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+                // Send delete request
+                fetch('{% url "calendar_delete" %}', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': csrfToken
+                    },
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Show success message temporarily
+                        const originalContent = button.innerHTML;
+                        button.innerHTML = '✅ Gelöscht';
+                        button.classList.remove('btn-outline-danger');
+                        button.classList.add('btn-success');
+
+                        // Refresh calendar after short delay
+                        setTimeout(() => {
+                            document.body.dispatchEvent(new Event('refreshCalendar'));
+                        }, 500);
+                    } else {
+                        // Show error
+                        alert('Fehler beim Löschen: ' + data.error);
+                        button.disabled = false;
+                        button.innerHTML = '🗑️ Löschen';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Netzwerkfehler beim Löschen des Termins');
+                    button.disabled = false;
+                    button.innerHTML = '🗑️ Löschen';
+                });
+            }
+        });
+    </script>
 {% endblock %}

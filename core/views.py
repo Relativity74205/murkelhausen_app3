@@ -1,10 +1,12 @@
 import logging
 from collections import defaultdict
-from datetime import date
+from datetime import date, datetime
 
+import pytz
 from django.http import JsonResponse
 from django.shortcuts import render
 from django.views.decorators.http import require_POST
+from gcsa.event import Event
 
 from family_intranet.repositories.fussballde import (
     get_e2_junioren_home_url,
@@ -12,7 +14,11 @@ from family_intranet.repositories.fussballde import (
     get_speldorf_next_home_games,
     get_vfb_speldorf_home_url,
 )
-from family_intranet.repositories.google_calendar import get_list_of_appointments
+from family_intranet.repositories.google_calendar import (
+    create_appointment,
+    delete_appointment,
+    get_list_of_appointments,
+)
 from family_intranet.repositories.gymbroich import (
     get_vertretungsplan,
     get_vertretungsplan_dates,
@@ -237,3 +243,159 @@ def calendar_data(request):
     except (ConnectionError, TimeoutError, ValueError) as e:
         context = {"error": str(e)}
         return render(request, "core/calendar_content.html", context)
+
+
+@require_POST
+def calendar_create(request):
+    """Create a new appointment in the selected calendar."""
+    logger = logging.getLogger(__name__)
+
+    try:
+        # Get form data
+        calendar_name = request.POST.get("calendar")
+        event_name = request.POST.get("event_name")
+        start_date_str = request.POST.get("start_date")
+        start_time_str = request.POST.get("start_time")
+        end_date_str = request.POST.get("end_date")
+        end_time_str = request.POST.get("end_time")
+        is_whole_day = request.POST.get("is_whole_day") == "on"
+        description = request.POST.get("description", "")
+
+        # Validate required fields
+        if not all([calendar_name, event_name, start_date_str, end_date_str]):
+            return JsonResponse(
+                {"success": False, "error": "Bitte alle Pflichtfelder ausfüllen"},
+                status=400,
+            )
+
+        # Get calendar ID from settings
+        if calendar_name not in GOOGLE_CALENDAR_SETTINGS.calendars:
+            return JsonResponse(
+                {
+                    "success": False,
+                    "error": f"Kalender '{calendar_name}' nicht gefunden",
+                },
+                status=400,
+            )
+
+        calendar_id = GOOGLE_CALENDAR_SETTINGS.calendars[calendar_name]
+
+        # Parse dates
+        start_date = datetime.strptime(start_date_str, "%Y-%m-%d").date()
+        end_date = datetime.strptime(end_date_str, "%Y-%m-%d").date()
+
+        # Create start and end datetime objects
+        berlin_tz = pytz.timezone("Europe/Berlin")
+
+        if is_whole_day or not start_time_str:
+            # All-day event
+            start = start_date
+            end = end_date
+        else:
+            # Timed event
+            start_time = datetime.strptime(start_time_str, "%H:%M").time()
+            start = berlin_tz.localize(datetime.combine(start_date, start_time))
+
+            if end_time_str:
+                end_time = datetime.strptime(end_time_str, "%H:%M").time()
+                end = berlin_tz.localize(datetime.combine(end_date, end_time))
+            else:
+                # Default to 1 hour duration
+                end = start.replace(hour=start.hour + 1)
+
+        # Create Event object
+        event = Event(
+            summary=event_name,
+            start=start,
+            end=end,
+            description=description if description else None,
+        )
+
+        # Create the appointment
+        logger.info(
+            f"Creating appointment '{event_name}' in calendar '{calendar_name}'"
+        )
+        create_appointment(event, calendar_id)
+
+        return JsonResponse(
+            {
+                "success": True,
+                "message": f"Termin '{event_name}' wurde erfolgreich erstellt",
+            }
+        )
+
+    except ValueError as e:
+        logger.error(f"Validation error creating appointment: {e}", exc_info=True)
+        return JsonResponse(
+            {"success": False, "error": f"Ungültige Eingabe: {e!s}"}, status=400
+        )
+    except (ConnectionError, TimeoutError) as e:
+        logger.error(f"Network error creating appointment: {e}", exc_info=True)
+        return JsonResponse(
+            {"success": False, "error": "Netzwerkfehler beim Erstellen des Termins"},
+            status=500,
+        )
+    except Exception as e:
+        logger.error(f"Error creating appointment: {e}", exc_info=True)
+        return JsonResponse(
+            {"success": False, "error": f"Fehler beim Erstellen: {e!s}"}, status=500
+        )
+
+
+@require_POST
+def calendar_delete(request):
+    """Delete an appointment from a calendar."""
+    logger = logging.getLogger(__name__)
+
+    try:
+        # Get form data
+        appointment_id = request.POST.get("appointment_id")
+        calendar_name = request.POST.get("calendar_name")
+
+        # Validate required fields
+        if not all([appointment_id, calendar_name]):
+            return JsonResponse(
+                {"success": False, "error": "Fehlende Pflichtfelder"}, status=400
+            )
+
+        # Get calendar ID from settings
+        if calendar_name not in GOOGLE_CALENDAR_SETTINGS.calendars:
+            return JsonResponse(
+                {
+                    "success": False,
+                    "error": f"Kalender '{calendar_name}' nicht gefunden",
+                },
+                status=400,
+            )
+
+        calendar_id = GOOGLE_CALENDAR_SETTINGS.calendars[calendar_name]
+
+        # Create Event object with minimal data for deletion
+        # Event constructor requires summary/start, but not used for deletion
+        event = Event(
+            summary="",  # Dummy value, not used for deletion
+            start=datetime.now(tz=pytz.UTC).date(),  # Dummy, not used
+            event_id=appointment_id,
+        )
+
+        # Delete the appointment
+        logger.info(
+            f"Deleting appointment '{appointment_id}' from calendar '{calendar_name}'"
+        )
+        delete_appointment(event, calendar_id)
+
+        return JsonResponse(
+            {"success": True, "message": "Termin wurde erfolgreich gelöscht"}
+        )
+
+    except (ConnectionError, TimeoutError) as e:
+        logger.error(f"Network error deleting appointment: {e}", exc_info=True)
+        return JsonResponse(
+            {"success": False, "error": "Netzwerkfehler beim Löschen des Termins"},
+            status=500,
+        )
+    except Exception as e:
+        logger.error(f"Error deleting appointment: {e}", exc_info=True)
+        return JsonResponse(
+            {"success": False, "error": f"Fehler beim Löschen: {e!s}"}, status=500
+        )

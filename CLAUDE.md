@@ -73,8 +73,8 @@
 ### Key Files & Locations
 - **Settings**: `family_intranet/settings.py` (configured with django-htmx)
 - **Main URLs**: `family_intranet/urls.py` (includes core.urls)
-- **Core URLs**: `core/urls.py` (home, calendar, football_games, handball_games, muelltermine, vertretungsplan, pihole_status, pihole_disable)
-- **Core Views**: `core/views.py` (home, calendar, football_games, handball_games, muelltermine, vertretungsplan, pihole_status, pihole_disable)
+- **Core URLs**: `core/urls.py` (home, calendar, calendar_data, calendar_create, calendar_delete, football_games, handball_games, muelltermine, vertretungsplan, pihole_status, pihole_disable)
+- **Core Views**: `core/views.py` (home, calendar, calendar_data, calendar_create, calendar_delete, football_games, handball_games, muelltermine, vertretungsplan, pihole_status, pihole_disable)
 - **Templates**:
   - `core/templates/core/home.html` (Bootstrap + HTMX)
   - `core/templates/core/calendar.html` (Family calendar display)
@@ -106,13 +106,21 @@
 
 #### 2. Family Calendar
 - **Status**: ✅ Complete
-- **URL**: `/calendar/`
-- **View**: `core.views.calendar` (`core/views.py:202-240`)
+- **URLs**:
+  - `/calendar/` (view appointments)
+  - `/calendar/data/` (HTMX data endpoint)
+  - `/calendar/create/` (POST endpoint to create appointments)
+  - `/calendar/delete/` (POST endpoint to delete appointments)
+- **Views**:
+  - `core.views.calendar` (`core/views.py:209-211`)
+  - `core.views.calendar_data` (`core/views.py:214-249`)
+  - `core.views.calendar_create` (`core/views.py:252-347`)
+  - `core.views.calendar_delete` (`core/views.py:350-401`)
 - **Template**: `core/templates/core/calendar.html`, `core/templates/core/calendar_content.html`
 - **Repository**: `family_intranet/repositories/google_calendar.py`
-- **Description**: Displays all family calendar appointments for the next 7 days from Google Calendar
+- **Description**: Displays all family calendar appointments for the next 7 days from Google Calendar, with ability to create and delete appointments
 - **Features**:
-  - Fetches appointments from all configured family calendars (Arkadius, Erik, Mattis, Andrea, Geburtstage)
+  - Fetches appointments from all configured family calendars (Arkadius, Familie, Erik, Mattis, Andrea, Geburtstage)
   - Displays appointments grouped by date
   - Shows appointment time (or "Ganztägig" for all-day events)
   - Color-coded calendar badges for each family member:
@@ -123,6 +131,21 @@
     - Geburtstage (red)
   - Recurring event badge for repeating appointments
   - Multi-day event support with date range display
+  - **Create New Appointments**:
+    - Modal form with calendar selection dropdown
+    - Fields: event name, start/end date/time, description
+    - Whole-day event checkbox (disables time fields)
+    - Auto-fills end date to match start date
+    - HTMX form submission with success/error messages
+    - Automatically reloads calendar after successful creation
+    - Form validation and error handling
+  - **Delete Appointments**:
+    - Delete button on each appointment card
+    - Confirmation dialog before deletion
+    - Visual feedback during deletion (button shows "⏳ Löschen...")
+    - Success indicator (button shows "✅ Gelöscht")
+    - Automatically reloads calendar after successful deletion
+    - Error handling for network/API issues
   - HTMX async loading with spinner
   - Error handling for network/API issues
   - Responsive Bootstrap layout with card-based design
@@ -346,7 +369,7 @@
 - **Code Quality**:
   - Ruff configured for Django projects with comprehensive rules
   - Per-file ignores for Django-generated files (manage.py, migrations)
-  - DTZ007 ignored for handballnordrhein.py, fussballde.py (date-only parsing)
+  - DTZ007 ignored for handballnordrhein.py, fussballde.py, core/views.py (date-only parsing from form inputs)
   - mheg.py: DTZ005, DTZ011, N815, E501, PLR2004 ignored (legacy code)
   - gymbroich.py: DTZ005, DTZ007, N815, E501, S113, SIM210, PLW2901, PLR2004 ignored (API naming conventions)
   - pihole.py: TRY003, EM101, EM102 ignored (exception message formatting)

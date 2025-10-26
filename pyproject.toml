@@ -105,6 +105,7 @@ ignore = [
 "family_intranet/repositories/owm.py" = ["TRY003", "EM102", "BLE001", "PLR2004", "E501", "T201"]
 "family_intranet/repositories/owm_functions.py" = ["PLR0911", "PLR2004"]
 "family_intranet/repositories/owm_models.py" = ["DTZ006", "DTZ012", "E501"]
+"core/views.py" = ["DTZ007"]
 ".github/**/*.py" = ["ALL"]
 
 [tool.ruff.lint.isort]

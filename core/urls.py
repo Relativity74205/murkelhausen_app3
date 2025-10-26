@@ -19,4 +19,6 @@ urlpatterns = [
     path("pihole/disable/", views.pihole_disable, name="pihole_disable"),
     path("calendar/", views.calendar, name="calendar"),
     path("calendar/data/", views.calendar_data, name="calendar_data"),
+    path("calendar/create/", views.calendar_create, name="calendar_create"),
+    path("calendar/delete/", views.calendar_delete, name="calendar_delete"),
 ]

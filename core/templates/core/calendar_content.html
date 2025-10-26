@@ -58,7 +58,7 @@
                                         </div>
                                     </div>
 
-                                    <!-- Duration Info Column -->
+                                    <!-- Duration Info and Actions Column -->
                                     <div class="col-md-3">
                                         <div class="text-end">
                                             {% if not appointment.is_whole_day %}
@@ -73,6 +73,17 @@
                                                         <div>{{ appointment.days_string }}</div>
                                                     </small>
                                                 {% endif %}
+                                            {% endif %}
+
+                                            <!-- Delete Button -->
+                                            {% if appointment.id %}
+                                                <button class="btn btn-sm btn-outline-danger mt-2 delete-appointment-btn"
+                                                        data-appointment-id="{{ appointment.id }}"
+                                                        data-appointment-name="{{ appointment.event_name }}"
+                                                        data-calendar-id="{{ appointment.calendar_id }}"
+                                                        data-calendar-name="{{ appointment.calendar_name }}">
+                                                    🗑️ Löschen
+                                                </button>
                                             {% endif %}
                                         </div>
                                     </div>
