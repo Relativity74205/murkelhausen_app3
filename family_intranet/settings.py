@@ -67,6 +67,7 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                "core.context_processors.htmx_timeout",
             ],
         },
     },
@@ -163,6 +164,9 @@ PODCASTINDEX_API_SECRET = os.environ.get("PODCASTINDEX_API_SECRET")
 PIHOLE_PRIMARY_PASSWORD = os.environ.get("PIHOLE_PRIMARY_PASSWORD")
 PIHOLE_BACKUP_PASSWORD = os.environ.get("PIHOLE_BACKUP_PASSWORD")
 OPENWEATHERMAP_API_KEY = os.environ.get("OPENWEATHERMAP_API_KEY")
+
+# HTMX timeout in milliseconds (default: 30 seconds)
+HTMX_TIMEOUT = int(os.environ.get("HTMX_TIMEOUT", "10000"))
 
 
 class GoogleCalendarSettings(BaseModel):

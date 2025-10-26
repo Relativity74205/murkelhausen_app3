@@ -33,7 +33,12 @@
             {% if available_dates %}
                 <div class="date-selector">
                     <label for="dateSelect" class="form-label fw-bold">Datum auswählen:</label>
-                    <select class="form-select" id="dateSelect" onchange="window.location.href='?date=' + this.value">
+                    <select class="form-select" id="dateSelect" name="date"
+                            hx-get="{% url 'vertretungsplan_data' %}"
+                            hx-trigger="change"
+                            hx-target="#vertretungsplan-content"
+                            hx-swap="innerHTML"
+                            hx-vals='js:{"tab": getActiveTab()}'>
                         {% for date in available_dates %}
                             <option value="{{ date.isoformat }}" {% if date == selected_date %}selected{% endif %}>
                                 {{ date|date:"D, d.m.Y" }}
@@ -75,12 +80,12 @@
                 <!-- Tabs Navigation -->
                 <ul class="nav nav-tabs mb-4" id="vertretungsplanTabs" role="tablist">
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link active" id="mattis-tab" data-bs-toggle="tab" data-bs-target="#mattis" type="button" role="tab" aria-controls="mattis" aria-selected="true">
+                        <button class="nav-link {% if selected_tab == 'mattis' %}active{% endif %}" id="mattis-tab" data-bs-toggle="tab" data-bs-target="#mattis" type="button" role="tab" aria-controls="mattis" aria-selected="{% if selected_tab == 'mattis' %}true{% else %}false{% endif %}">
                             Mattis
                         </button>
                     </li>
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="alle-tab" data-bs-toggle="tab" data-bs-target="#alle" type="button" role="tab" aria-controls="alle" aria-selected="false">
+                        <button class="nav-link {% if selected_tab == 'alle' %}active{% endif %}" id="alle-tab" data-bs-toggle="tab" data-bs-target="#alle" type="button" role="tab" aria-controls="alle" aria-selected="{% if selected_tab == 'alle' %}true{% else %}false{% endif %}">
                             Gesamte Schule
                         </button>
                     </li>
@@ -89,7 +94,7 @@
                 <!-- Tabs Content -->
                 <div class="tab-content" id="vertretungsplanTabsContent">
                     <!-- Mattis Tab -->
-                    <div class="tab-pane fade show active" id="mattis" role="tabpanel" aria-labelledby="mattis-tab">
+                    <div class="tab-pane fade {% if selected_tab == 'mattis' %}show active{% endif %}" id="mattis" role="tabpanel" aria-labelledby="mattis-tab">
                         {% if vertretungsplan_mattis.events_present %}
                             <h4 class="mb-3">Vertretungen für Mattis</h4>
                             <div class="row g-3">
@@ -184,7 +189,7 @@
                     </div>
 
                     <!-- Alle Tab -->
-                    <div class="tab-pane fade" id="alle" role="tabpanel" aria-labelledby="alle-tab">
+                    <div class="tab-pane fade {% if selected_tab == 'alle' %}show active{% endif %}" id="alle" role="tabpanel" aria-labelledby="alle-tab">
                         {% if vertretungsplan_full.events_present %}
                             <h4 class="mb-3">Alle Vertretungen</h4>
                             <div class="row g-3">

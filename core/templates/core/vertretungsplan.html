@@ -40,3 +40,27 @@
         </div>
     </div>
 {% endblock %}
+
+{% block extra_js %}
+<script>
+    // Track active tab across HTMX requests
+    let currentActiveTab = 'mattis';
+
+    // Function to get the active tab (used by HTMX hx-vals)
+    function getActiveTab() {
+        // Try to get from DOM first
+        const activeButton = document.querySelector('#vertretungsplanTabs .nav-link.active');
+        if (activeButton) {
+            currentActiveTab = activeButton.getAttribute('aria-controls');
+        }
+        return currentActiveTab;
+    }
+
+    // Listen for tab changes and update the tracking variable
+    document.addEventListener('shown.bs.tab', function(event) {
+        if (event.target.closest('#vertretungsplanTabs')) {
+            currentActiveTab = event.target.getAttribute('aria-controls');
+        }
+    });
+</script>
+{% endblock %}

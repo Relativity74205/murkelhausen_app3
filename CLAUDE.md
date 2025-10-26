@@ -71,10 +71,12 @@
 - **Virtual Environment**: `.venv` (created by uv)
 
 ### Key Files & Locations
-- **Settings**: `family_intranet/settings.py` (configured with django-htmx)
+- **Settings**: `family_intranet/settings.py` (configured with django-htmx, HTMX_TIMEOUT)
 - **Main URLs**: `family_intranet/urls.py` (includes core.urls)
 - **Core URLs**: `core/urls.py` (home, calendar, calendar_data, calendar_create, calendar_update, calendar_delete, football_games, handball_games, muelltermine, vertretungsplan, pihole_status, pihole_disable)
 - **Core Views**: `core/views.py` (home, calendar, calendar_data, calendar_create, calendar_update, calendar_delete, football_games, handball_games, muelltermine, vertretungsplan, pihole_status, pihole_disable)
+- **Context Processors**: `core/context_processors.py` (htmx_timeout - makes HTMX_TIMEOUT available to all templates)
+- **Static Files**: `core/static/core/` (favicon.svg - browser tab icon)
 - **Templates**:
   - `core/templates/core/home.html` (Bootstrap + HTMX)
   - `core/templates/core/calendar.html` (Family calendar display)
@@ -374,7 +376,25 @@
 6. **Automatic Updates**: Background task to refresh sports data periodically
 
 ### Technical Notes
+- **Favicon**: SVG house icon (`core/static/core/favicon.svg`) displayed in browser tabs
+  - Purple gradient background (#667eea to #764ba2)
+  - White house icon with door and windows
+  - Fallback emoji favicon (🏠) for older browsers
+  - Configured in `core/templates/base.html`
 - **HTMX Target**: `#main-content` div for dynamic updates (not used on handball page)
+- **HTMX Timeout Configuration**:
+  - Configurable timeout for all HTMX requests (default: 30 seconds)
+  - Setting: `HTMX_TIMEOUT` in `family_intranet/settings.py` (milliseconds)
+  - Environment variable: `HTMX_TIMEOUT` (optional, defaults to 30000)
+  - Context processor: `core/context_processors.py` makes timeout available to all templates
+  - Configuration via meta tag in `core/templates/base.html`: `<meta name="htmx-config" content='{"timeout":{{ HTMX_TIMEOUT }}}'>`
+  - Global timeout handler in `core/templates/base.html`:
+    - Replaces loading spinners with error notification on timeout
+    - Timeout message: "⏱️ Zeitüberschreitung - Laden abgebrochen" (red text)
+    - Network error message: "❌ Netzwerkfehler" (red text)
+    - Auto-removes error message after 10 seconds
+    - Handles both `htmx:timeout` and `htmx:sendError` events
+  - Base template: `core/templates/base.html` (timeout configuration and event handlers)
 - **Bootstrap Components**: Used cards, navbar, buttons, grid system, badges
 - **Loading Indicators**: HTMX loading spinner with CSS transitions
 - **Responsive Design**: Mobile-first approach with Bootstrap classes

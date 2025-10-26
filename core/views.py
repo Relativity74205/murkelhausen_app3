@@ -136,6 +136,9 @@ def vertretungsplan_data(request):
         else:
             selected_date = available_dates[0] if available_dates else None
 
+        # Get the selected tab from query params, default to 'mattis'
+        selected_tab = request.GET.get("tab", "mattis")
+
         # Get the vertretungsplan for the selected date
         vertretungsplan_mattis = None
         vertretungsplan_full = None
@@ -146,6 +149,7 @@ def vertretungsplan_data(request):
         context = {
             "available_dates": available_dates,
             "selected_date": selected_date,
+            "selected_tab": selected_tab,
             "vertretungsplan_mattis": vertretungsplan_mattis,
             "vertretungsplan_full": vertretungsplan_full,
         }
