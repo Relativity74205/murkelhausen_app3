@@ -215,7 +215,12 @@ def calendar(request):
 
 def calendar_data(request):
     # Async data loading for HTMX
+    logger = logging.getLogger(__name__)
     try:
+        # Get number of days to show from query parameter, default to 7
+        days_to_show = int(request.GET.get("days", 7))
+        logger.info(f"Calendar data requested for {days_to_show} days")
+
         # Fetch appointments from all calendars in parallel for better performance
         all_appointments = []
 
@@ -228,7 +233,7 @@ def calendar_data(request):
                     get_list_of_appointments,
                     calendar_id=calendar_id,
                     calendar_name=calendar_name,
-                    amount_of_days_to_show=7,
+                    amount_of_days_to_show=days_to_show,
                 ): calendar_name
                 for calendar_name, calendar_id in calendars
             }
@@ -261,6 +266,7 @@ def calendar_data(request):
         context = {
             "grouped_appointments": grouped_appointments,
             "all_appointments": all_appointments,
+            "days_to_show": days_to_show,
         }
         return render(request, "core/calendar_content.html", context)
     except (ConnectionError, TimeoutError, ValueError) as e:

@@ -64,10 +64,20 @@
     <section class="hero-section">
         <div class="container text-center">
             <h1 class="display-4 mb-3">📅 Familienkalender</h1>
-            <p class="lead">Termine für die nächsten 7 Tage</p>
-            <button type="button" class="btn btn-light btn-lg mt-3" data-bs-toggle="modal" data-bs-target="#newAppointmentModal">
-                ➕ Neuer Termin
-            </button>
+            <p class="lead" id="days-text">Termine für die nächsten <span id="days-count">7</span> Tage</p>
+            <div class="d-flex justify-content-center gap-3 mt-3 flex-wrap">
+                <button type="button" class="btn btn-light btn-lg" data-bs-toggle="modal" data-bs-target="#newAppointmentModal">
+                    ➕ Neuer Termin
+                </button>
+                <select class="form-select form-select-lg" id="days-select" style="max-width: 200px;">
+                    <option value="3">3 Tage</option>
+                    <option value="7" selected>7 Tage</option>
+                    <option value="14">14 Tage</option>
+                    <option value="30">30 Tage</option>
+                    <option value="60">60 Tage</option>
+                    <option value="90">90 Tage</option>
+                </select>
+            </div>
         </div>
     </section>
 
@@ -224,7 +234,7 @@
 
     <!-- Main Content -->
     <div class="container my-5" id="calendar-content"
-         hx-get="{% url 'calendar_data' %}"
+         hx-get="{% url 'calendar_data' %}?days=7"
          hx-trigger="load, refreshCalendar from:body"
          hx-swap="innerHTML">
         <!-- Loading Placeholder -->
@@ -328,6 +338,27 @@
             });
         }
 
+        // Handle days selection dropdown
+        function updateCalendarDays(days) {
+            // Update the text
+            document.getElementById('days-count').textContent = days;
+
+            // Use HTMX ajax to fetch new data with updated days parameter
+            const baseUrl = '{% url "calendar_data" %}';
+            const newUrl = baseUrl + '?days=' + days;
+
+            console.log('[Calendar] Fetching data for ' + days + ' days from: ' + newUrl);
+
+            htmx.ajax('GET', newUrl, {
+                target: '#calendar-content',
+                swap: 'innerHTML'
+            }).then(function() {
+                console.log('[Calendar] Data loaded successfully for ' + days + ' days');
+            }).catch(function(error) {
+                console.error('[Calendar] Error loading data:', error);
+            });
+        }
+
         // Set today's date as default for start_date
         document.addEventListener('DOMContentLoaded', function() {
             const today = new Date().toISOString().split('T')[0];
@@ -339,6 +370,53 @@
 
             // Setup validation error clearing for edit form
             setupValidationClearOnChange('edit_start_date', 'edit_start_time', 'edit_end_date', 'edit_end_time');
+
+            // Handle days dropdown change
+            document.getElementById('days-select').addEventListener('change', function() {
+                console.log('Days dropdown changed to:', this.value);
+                updateCalendarDays(this.value);
+            });
+
+            // Reset create form when modal is closed
+            const newAppointmentModal = document.getElementById('newAppointmentModal');
+            newAppointmentModal.addEventListener('hidden.bs.modal', function() {
+                const form = this.querySelector('form');
+                form.reset();
+
+                // Clear any error messages
+                document.getElementById('appointment-message').innerHTML = '';
+
+                // Reset dates to today
+                const today = new Date().toISOString().split('T')[0];
+                document.getElementById('start_date').value = today;
+                document.getElementById('end_date').value = today;
+
+                // Clear validation errors
+                ['start_date', 'start_time', 'end_date', 'end_time'].forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) {
+                        el.classList.remove('field-error');
+                    }
+                });
+            });
+
+            // Reset edit form when modal is closed
+            const editAppointmentModal = document.getElementById('editAppointmentModal');
+            editAppointmentModal.addEventListener('hidden.bs.modal', function() {
+                const form = this.querySelector('form');
+                form.reset();
+
+                // Clear any error messages
+                document.getElementById('edit-appointment-message').innerHTML = '';
+
+                // Clear validation errors
+                ['edit_start_date', 'edit_start_time', 'edit_end_date', 'edit_end_time'].forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) {
+                        el.classList.remove('field-error');
+                    }
+                });
+            });
         });
 
         // Intercept form submission for create appointment to validate
@@ -372,51 +450,78 @@
             }
         });
 
+        // Function to show success toast
+        function showSuccessToast(message) {
+            // Create toast container if it doesn't exist
+            let toastContainer = document.getElementById('toast-container');
+            if (!toastContainer) {
+                toastContainer = document.createElement('div');
+                toastContainer.id = 'toast-container';
+                toastContainer.className = 'position-fixed top-0 end-0 p-3';
+                toastContainer.style.zIndex = '9999';
+                document.body.appendChild(toastContainer);
+            }
+
+            // Create toast
+            const toastId = 'toast-' + Date.now();
+            const toastHtml = `
+                <div id="${toastId}" class="toast align-items-center text-white bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true" data-bs-autohide="true" data-bs-delay="5000">
+                    <div class="d-flex">
+                        <div class="toast-body">
+                            ✅ ${message}
+                        </div>
+                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                    </div>
+                </div>
+            `;
+            toastContainer.insertAdjacentHTML('beforeend', toastHtml);
+
+            // Show toast
+            const toastElement = document.getElementById(toastId);
+            const toast = new bootstrap.Toast(toastElement);
+            toast.show();
+
+            // Remove toast from DOM after it's hidden
+            toastElement.addEventListener('hidden.bs.toast', function() {
+                toastElement.remove();
+            });
+        }
+
         document.body.addEventListener('htmx:afterRequest', function(event) {
             // Check if this was the create appointment form
             if (event.detail.target.id === 'appointment-message') {
                 if (event.detail.successful) {
                     const response = JSON.parse(event.detail.xhr.response);
                     if (response.success) {
-                        // Show success message
-                        event.detail.target.innerHTML = '<div class="alert alert-success" role="alert">' +
-                            '✅ ' + response.message +
-                            '</div>';
+                        // Close modal immediately
+                        const modalElement = document.getElementById('newAppointmentModal');
+                        const modal = bootstrap.Modal.getInstance(modalElement);
+                        if (modal) {
+                            modal.hide();
+                        }
 
-                        // Reset form
-                        event.detail.target.closest('form').reset();
-
-                        // Reload calendar data by dispatching custom event
-                        document.body.dispatchEvent(new Event('refreshCalendar'));
-
-                        // Close modal after 2 seconds
+                        // Clean up modal backdrop and body classes
                         setTimeout(() => {
-                            const modalElement = document.getElementById('newAppointmentModal');
-                            const modal = bootstrap.Modal.getInstance(modalElement);
-                            if (modal) {
-                                modal.hide();
-                            }
+                            const backdrops = document.querySelectorAll('.modal-backdrop');
+                            backdrops.forEach(backdrop => backdrop.remove());
+                            document.body.classList.remove('modal-open');
+                            document.body.style.overflow = '';
+                            document.body.style.paddingRight = '';
+                        }, 300);
 
-                            // Remove any leftover backdrops (Bootstrap bug workaround)
-                            setTimeout(() => {
-                                const backdrops = document.querySelectorAll('.modal-backdrop');
-                                backdrops.forEach(backdrop => backdrop.remove());
-                                document.body.classList.remove('modal-open');
-                                document.body.style.overflow = '';
-                                document.body.style.paddingRight = '';
+                        // Show success toast
+                        showSuccessToast(response.message);
 
-                                // Clear message
-                                event.detail.target.innerHTML = '';
-                            }, 500);
-                        }, 2000);
+                        // Reload calendar data
+                        document.body.dispatchEvent(new Event('refreshCalendar'));
                     } else {
-                        // Show error message
+                        // Show error message in modal
                         event.detail.target.innerHTML = '<div class="alert alert-danger" role="alert">' +
                             '❌ Fehler: ' + response.error +
                             '</div>';
                     }
                 } else {
-                    // Network error
+                    // Network error - show in modal
                     event.detail.target.innerHTML = '<div class="alert alert-danger" role="alert">' +
                         '❌ Netzwerkfehler beim Erstellen des Termins' +
                         '</div>';
@@ -514,16 +619,11 @@
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        // Show success message temporarily
-                        const originalContent = button.innerHTML;
-                        button.innerHTML = '✅ Gelöscht';
-                        button.classList.remove('btn-outline-danger');
-                        button.classList.add('btn-success');
+                        // Show success toast
+                        showSuccessToast(data.message);
 
-                        // Refresh calendar after short delay
-                        setTimeout(() => {
-                            document.body.dispatchEvent(new Event('refreshCalendar'));
-                        }, 500);
+                        // Refresh calendar immediately
+                        document.body.dispatchEvent(new Event('refreshCalendar'));
                     } else {
                         // Show error
                         alert('Fehler beim Löschen: ' + data.error);
@@ -607,39 +707,29 @@
                 if (event.detail.successful) {
                     const response = JSON.parse(event.detail.xhr.response);
                     if (response.success) {
-                        // Show success message
-                        event.detail.target.innerHTML = '<div class="alert alert-success" role="alert">' +
-                            '✅ ' + response.message +
-                            '</div>';
+                        // Close modal immediately
+                        const modalElement = document.getElementById('editAppointmentModal');
+                        const modal = bootstrap.Modal.getInstance(modalElement);
+                        if (modal) {
+                            modal.hide();
+                        }
 
-                        // Reset form
-                        event.detail.target.closest('form').reset();
+                        // Clean up modal backdrop and body classes
+                        setTimeout(() => {
+                            const backdrops = document.querySelectorAll('.modal-backdrop');
+                            backdrops.forEach(backdrop => backdrop.remove());
+                            document.body.classList.remove('modal-open');
+                            document.body.style.overflow = '';
+                            document.body.style.paddingRight = '';
+                        }, 300);
+
+                        // Show success toast
+                        showSuccessToast(response.message);
 
                         // Reload calendar data
                         document.body.dispatchEvent(new Event('refreshCalendar'));
-
-                        // Close modal after 2 seconds
-                        setTimeout(() => {
-                            const modalElement = document.getElementById('editAppointmentModal');
-                            const modal = bootstrap.Modal.getInstance(modalElement);
-                            if (modal) {
-                                modal.hide();
-                            }
-
-                            // Remove any leftover backdrops
-                            setTimeout(() => {
-                                const backdrops = document.querySelectorAll('.modal-backdrop');
-                                backdrops.forEach(backdrop => backdrop.remove());
-                                document.body.classList.remove('modal-open');
-                                document.body.style.overflow = '';
-                                document.body.style.paddingRight = '';
-
-                                // Clear message
-                                event.detail.target.innerHTML = '';
-                            }, 500);
-                        }, 2000);
                     } else {
-                        // Show error message
+                        // Show error message in modal
                         event.detail.target.innerHTML = '<div class="alert alert-danger" role="alert">' +
                             '❌ Fehler: ' + response.error +
                             '</div>';
