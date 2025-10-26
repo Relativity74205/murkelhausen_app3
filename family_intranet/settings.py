@@ -13,6 +13,8 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 import os
 from pathlib import Path
 
+from pydantic import BaseModel
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -161,6 +163,34 @@ PODCASTINDEX_API_SECRET = os.environ.get("PODCASTINDEX_API_SECRET")
 PIHOLE_PRIMARY_PASSWORD = os.environ.get("PIHOLE_PRIMARY_PASSWORD")
 PIHOLE_BACKUP_PASSWORD = os.environ.get("PIHOLE_BACKUP_PASSWORD")
 OPENWEATHERMAP_API_KEY = os.environ.get("OPENWEATHERMAP_API_KEY")
+
+
+class GoogleCalendarSettings(BaseModel):
+    api_key: str
+    private_key_id: str
+    project_id: str
+    client_email: str
+    client_id: str
+    client_x509_cert_url: str
+    calendars: dict[str, str]
+
+
+GOOGLE_CALENDAR_SETTINGS = GoogleCalendarSettings(
+    api_key=os.environ.get("GOOGLE_PRIVATE_KEY", "placeholder"),
+    private_key_id="3824b92878cacd7dbdca0ad9000a0d76962f697f",
+    project_id="murkelhausen",
+    client_email=os.environ.get("GOOGLE_CLIENT_EMAIL", "placeholder"),
+    client_id="100602016701161296682",
+    client_x509_cert_url="https://www.googleapis.com/robot/v1/metadata/x509/murkelhausen2%40murkelhausen.iam.gserviceaccount.com",
+    calendars={
+        "Arkadius": os.environ.get("GOOGLE_CALENDAR_ARKADIUS", "placeholder"),
+        "Familie": os.environ.get("GOOGLE_CALENDAR_FAMILIE", "placeholder"),
+        "Erik": os.environ.get("GOOGLE_CALENDAR_ERIK", "placeholder"),
+        "Mattis": os.environ.get("GOOGLE_CALENDAR_MATTIS", "placeholder"),
+        "Andrea": os.environ.get("GOOGLE_CALENDAR_ANDREA", "placeholder"),
+        "Geburtstage": os.environ.get("GOOGLE_CALENDAR_GEBURTSTAGE", "placeholder"),
+    },
+)
 
 LOGGING = {
     "version": 1,

@@ -1,0 +1,92 @@
+{% if error %}
+    <div class="alert alert-danger" role="alert">
+        <h4 class="alert-heading">Fehler beim Laden der Daten</h4>
+        <p>{{ error }}</p>
+    </div>
+{% else %}
+    {% if grouped_appointments %}
+        {% for date, appointments in grouped_appointments %}
+            <!-- Date Header -->
+            <div class="date-header">
+                <h4 class="mb-0">{{ date|date:"l, d. F Y" }}</h4>
+            </div>
+
+            <!-- Appointments for this date -->
+            <div class="row g-3 mb-4">
+                {% for appointment in appointments %}
+                    <div class="col-12">
+                        <div class="card appointment-card shadow-sm">
+                            <div class="card-body">
+                                <div class="row align-items-center">
+                                    <!-- Time Column -->
+                                    <div class="col-md-2">
+                                        <div class="text-center">
+                                            {% if appointment.is_whole_day %}
+                                                <span class="badge badge-whole-day">Ganztägig</span>
+                                            {% else %}
+                                                <div class="fw-bold fs-5">{{ appointment.start_time }}</div>
+                                                {% if appointment.start_time != appointment.end_time %}
+                                                    <small class="text-muted">bis {{ appointment.end_time }}</small>
+                                                {% endif %}
+                                            {% endif %}
+                                        </div>
+                                    </div>
+
+                                    <!-- Event Details Column -->
+                                    <div class="col-md-7">
+                                        <h5 class="mb-2">{{ appointment.event_name }}</h5>
+                                        <div>
+                                            <!-- Calendar Badge -->
+                                            {% if appointment.calendar_name == "Arkadius" %}
+                                                <span class="badge badge-arkadius">{{ appointment.calendar_name }}</span>
+                                            {% elif appointment.calendar_name == "Erik" %}
+                                                <span class="badge badge-erik">{{ appointment.calendar_name }}</span>
+                                            {% elif appointment.calendar_name == "Mattis" %}
+                                                <span class="badge badge-mattis">{{ appointment.calendar_name }}</span>
+                                            {% elif appointment.calendar_name == "Andrea" %}
+                                                <span class="badge badge-andrea">{{ appointment.calendar_name }}</span>
+                                            {% elif appointment.calendar_name == "Geburtstage" %}
+                                                <span class="badge badge-geburtstage">{{ appointment.calendar_name }}</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">{{ appointment.calendar_name }}</span>
+                                            {% endif %}
+
+                                            <!-- Recurring Badge -->
+                                            {% if appointment.is_recurring %}
+                                                <span class="badge badge-recurring">🔄 Wiederkehrend</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+
+                                    <!-- Duration Info Column -->
+                                    <div class="col-md-3">
+                                        <div class="text-end">
+                                            {% if not appointment.is_whole_day %}
+                                                <small class="text-muted">
+                                                    {% if appointment.start_date != appointment.end_date %}
+                                                        <div>{{ appointment.days_string }}</div>
+                                                    {% endif %}
+                                                </small>
+                                            {% else %}
+                                                {% if appointment.start_date != appointment.end_date %}
+                                                    <small class="text-muted">
+                                                        <div>{{ appointment.days_string }}</div>
+                                                    </small>
+                                                {% endif %}
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endfor %}
+    {% else %}
+        <div class="alert alert-info" role="alert">
+            <h4 class="alert-heading">Keine Termine</h4>
+            <p>Für die nächsten 7 Tage sind keine Termine geplant.</p>
+        </div>
+    {% endif %}
+{% endif %}

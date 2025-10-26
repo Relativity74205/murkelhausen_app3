@@ -1,4 +1,5 @@
 import logging
+from collections import defaultdict
 from datetime import date
 
 from django.http import JsonResponse
@@ -11,6 +12,7 @@ from family_intranet.repositories.fussballde import (
     get_speldorf_next_home_games,
     get_vfb_speldorf_home_url,
 )
+from family_intranet.repositories.google_calendar import get_list_of_appointments
 from family_intranet.repositories.gymbroich import (
     get_vertretungsplan,
     get_vertretungsplan_dates,
@@ -30,6 +32,7 @@ from family_intranet.repositories.mheg import (
 )
 from family_intranet.repositories.owm import get_weather_data_muelheim
 from family_intranet.repositories.pihole import MultiPiHoleRepository
+from family_intranet.settings import GOOGLE_CALENDAR_SETTINGS
 
 
 def home(request):
@@ -195,3 +198,42 @@ def weather(request):
     except (ConnectionError, TimeoutError, ValueError) as e:
         context = {"error": str(e)}
         return render(request, "core/weather.html", context)
+
+
+def calendar(request):
+    # Initial page load - just show loading placeholder
+    return render(request, "core/calendar.html")
+
+
+def calendar_data(request):
+    # Async data loading for HTMX
+    try:
+        # Fetch appointments from all configured calendars for the next 7 days
+        all_appointments = []
+        for calendar_name, calendar_id in GOOGLE_CALENDAR_SETTINGS.calendars.items():
+            appointments = get_list_of_appointments(
+                calendar_id=calendar_id,
+                calendar_name=calendar_name,
+                amount_of_days_to_show=7,
+            )
+            all_appointments.extend(appointments)
+
+        # Sort all appointments by start timestamp
+        all_appointments.sort(key=lambda x: x.start_timestamp)
+
+        # Group appointments by date for better display
+        appointments_by_date = defaultdict(list)
+        for appointment in all_appointments:
+            appointments_by_date[appointment.start_date].append(appointment)
+
+        # Convert to sorted list of (date, appointments) tuples
+        grouped_appointments = sorted(appointments_by_date.items())
+
+        context = {
+            "grouped_appointments": grouped_appointments,
+            "all_appointments": all_appointments,
+        }
+        return render(request, "core/calendar_content.html", context)
+    except (ConnectionError, TimeoutError, ValueError) as e:
+        context = {"error": str(e)}
+        return render(request, "core/calendar_content.html", context)

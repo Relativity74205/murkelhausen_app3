@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+
+{% block title %}Kalender - Murkelhausen Family{% endblock %}
+
+{% block nav_calendar %}active{% endblock %}
+
+{% block extra_css %}
+<!-- HTMX -->
+<script src="https://unpkg.com/htmx.org@2.0.1"></script>
+
+<style>
+    .hero-section {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 3rem 0;
+    }
+    .appointment-card {
+        transition: transform 0.2s;
+        border-left: 4px solid #667eea;
+    }
+    .appointment-card:hover {
+        transform: translateY(-3px);
+    }
+    .badge-arkadius {
+        background-color: #0d6efd;
+    }
+    .badge-erik {
+        background-color: #198754;
+    }
+    .badge-mattis {
+        background-color: #ffc107;
+        color: #000;
+    }
+    .badge-andrea {
+        background-color: #d63384;
+    }
+    .badge-geburtstage {
+        background-color: #dc3545;
+    }
+    .badge-whole-day {
+        background-color: #6c757d;
+    }
+    .badge-recurring {
+        background-color: #0dcaf0;
+        color: #000;
+    }
+    .date-header {
+        background-color: #f8f9fa;
+        border-left: 4px solid #667eea;
+        padding: 0.75rem 1rem;
+        margin-bottom: 1rem;
+        font-weight: bold;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+    <!-- Hero Section -->
+    <section class="hero-section">
+        <div class="container text-center">
+            <h1 class="display-4 mb-3">📅 Familienkalender</h1>
+            <p class="lead">Termine für die nächsten 7 Tage</p>
+        </div>
+    </section>
+
+    <!-- Main Content -->
+    <div class="container my-5" id="calendar-content"
+         hx-get="{% url 'calendar_data' %}"
+         hx-trigger="load"
+         hx-swap="innerHTML">
+        <!-- Loading Placeholder -->
+        <div class="text-center py-5">
+            <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-3 text-muted">Lade Termine...</p>
+        </div>
+    </div>
+{% endblock %}

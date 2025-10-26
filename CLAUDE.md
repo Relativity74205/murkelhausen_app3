@@ -73,15 +73,17 @@
 ### Key Files & Locations
 - **Settings**: `family_intranet/settings.py` (configured with django-htmx)
 - **Main URLs**: `family_intranet/urls.py` (includes core.urls)
-- **Core URLs**: `core/urls.py` (home, football_games, handball_games, muelltermine, vertretungsplan, pihole_status, pihole_disable)
-- **Core Views**: `core/views.py` (home, football_games, handball_games, muelltermine, vertretungsplan, pihole_status, pihole_disable)
+- **Core URLs**: `core/urls.py` (home, calendar, football_games, handball_games, muelltermine, vertretungsplan, pihole_status, pihole_disable)
+- **Core Views**: `core/views.py` (home, calendar, football_games, handball_games, muelltermine, vertretungsplan, pihole_status, pihole_disable)
 - **Templates**:
   - `core/templates/core/home.html` (Bootstrap + HTMX)
+  - `core/templates/core/calendar.html` (Family calendar display)
   - `core/templates/core/football_games.html` (Football schedule display)
   - `core/templates/core/handball_games.html` (Handball schedule display)
   - `core/templates/core/muelltermine.html` (Trash collection schedule)
   - `core/templates/core/vertretungsplan.html` (School substitution schedule)
 - **Repositories**:
+  - `family_intranet/repositories/google_calendar.py` (Google Calendar API integration)
   - `family_intranet/repositories/fussballde.py` (Football web scraping)
   - `family_intranet/repositories/handballnordrhein.py` (Handball web scraping)
   - `family_intranet/repositories/mheg.py` (MHEG waste management API)
@@ -102,7 +104,54 @@
   - HTMX loading indicators
   - Custom CSS for styling
 
-#### 2. Football Games Schedule
+#### 2. Family Calendar
+- **Status**: ✅ Complete
+- **URL**: `/calendar/`
+- **View**: `core.views.calendar` (`core/views.py:202-240`)
+- **Template**: `core/templates/core/calendar.html`, `core/templates/core/calendar_content.html`
+- **Repository**: `family_intranet/repositories/google_calendar.py`
+- **Description**: Displays all family calendar appointments for the next 7 days from Google Calendar
+- **Features**:
+  - Fetches appointments from all configured family calendars (Arkadius, Erik, Mattis, Andrea, Geburtstage)
+  - Displays appointments grouped by date
+  - Shows appointment time (or "Ganztägig" for all-day events)
+  - Color-coded calendar badges for each family member:
+    - Arkadius (blue)
+    - Erik (green)
+    - Mattis (yellow)
+    - Andrea (pink)
+    - Geburtstage (red)
+  - Recurring event badge for repeating appointments
+  - Multi-day event support with date range display
+  - HTMX async loading with spinner
+  - Error handling for network/API issues
+  - Responsive Bootstrap layout with card-based design
+- **Dependencies**: gcsa, google-api-python-client, pydantic, babel, pytz, python-dateutil
+- **Data Model**: `Appointment` Pydantic BaseModel with fields:
+  - id, calendar_id, calendar_name (str | None)
+  - event_name (str)
+  - start_timestamp, end_timestamp (datetime)
+  - start_date, end_date (date)
+  - start_time, end_time (str)
+  - days_string (str) - formatted date range
+  - is_whole_day, is_recurring (bool)
+- **API**: Google Calendar API via service account authentication
+- **Configuration**:
+  - Service account credentials in environment variables:
+    - `GOOGLE_PRIVATE_KEY`
+    - `GOOGLE_CLIENT_EMAIL`
+  - Calendar IDs for each family member:
+    - `GOOGLE_CALENDAR_ARKADIUS`
+    - `GOOGLE_CALENDAR_ERIK`
+    - `GOOGLE_CALENDAR_MATTIS`
+    - `GOOGLE_CALENDAR_ANDREA`
+    - `GOOGLE_CALENDAR_GEBURTSTAGE`
+  - Configured in `family_intranet/settings.py` as `GOOGLE_CALENDAR_SETTINGS`
+- **Code Quality Notes**:
+  - google_calendar.py excluded from type checking (ty) due to external library type issues
+  - Per-file ruff ignores for legacy code patterns: SIM102, RET504, TRY003, EM102, DTZ011, B905, PLW2901, PLW0127, C416
+
+#### 3. Football Games Schedule
 - **Status**: ✅ Complete
 - **URL**: `/football/`
 - **View**: `core.views.football_games` (`core/views.py:44-56`)
@@ -124,7 +173,7 @@
   - home_team, away_team (str)
   - result (str | None)
 
-#### 3. Handball Games Schedule
+#### 4. Handball Games Schedule
 - **Status**: ✅ Complete
 - **URL**: `/handball/`
 - **View**: `core.views.handball_games` (`core/views.py:21-41`)
@@ -152,7 +201,7 @@
   - spielbericht_genehmigt (bool | None)
   - spielfrei (bool | None)
 
-#### 4. Mülltermine (Trash Collection Schedule)
+#### 5. Mülltermine (Trash Collection Schedule)
 - **Status**: ✅ Complete
 - **URL**: `/muell/`
 - **View**: `core.views.muelltermine` (`core/views.py:73-81`)
@@ -180,7 +229,7 @@
 - **API**: Uses MHEG waste management API with caching (15 minutes)
 - **Configuration Notes**: Address is hardcoded in mheg.py (str_name, str_hnr, fra_strase)
 
-#### 5. Vertretungsplan (School Substitution Schedule)
+#### 6. Vertretungsplan (School Substitution Schedule)
 - **Status**: ✅ Complete
 - **URL**: `/vertretungsplan/`
 - **View**: `core.views.vertretungsplan` (`core/views.py:87-115`)
@@ -210,7 +259,7 @@
   - MATTIS_CLASS_SUFFIX = "B"
   - Class is calculated dynamically based on current date
 
-#### 6. Pi-hole Control
+#### 7. Pi-hole Control
 - **Status**: ✅ Complete
 - **URLs**:
   - `/pihole/status/` (GET endpoint for current status)
@@ -281,13 +330,12 @@
 **All three must pass before considering changes complete!**
 
 ### Next Steps (Future Implementation)
-1. **Calendar Integration**: Google Calendar API connection
-2. **Information Hub**: APIs and additional data sources
-3. **PostgreSQL Setup**: Replace SQLite with PostgreSQL
-4. **User Authentication**: Family member login system
-5. **Admin Interface**: Django admin customization for family data
-6. **Data Caching**: Cache scraped sports data to reduce API calls
-7. **Automatic Updates**: Background task to refresh sports data periodically
+1. **Information Hub**: APIs and additional data sources
+2. **PostgreSQL Setup**: Replace SQLite with PostgreSQL
+3. **User Authentication**: Family member login system
+4. **Admin Interface**: Django admin customization for family data
+5. **Data Caching**: Cache scraped sports data to reduce API calls
+6. **Automatic Updates**: Background task to refresh sports data periodically
 
 ### Technical Notes
 - **HTMX Target**: `#main-content` div for dynamic updates (not used on handball page)
@@ -302,11 +350,12 @@
   - mheg.py: DTZ005, DTZ011, N815, E501, PLR2004 ignored (legacy code)
   - gymbroich.py: DTZ005, DTZ007, N815, E501, S113, SIM210, PLW2901, PLR2004 ignored (API naming conventions)
   - pihole.py: TRY003, EM101, EM102 ignored (exception message formatting)
+  - google_calendar.py: SIM102, RET504, TRY003, EM102, DTZ011, B905, PLW2901, PLW0127, C416 ignored (legacy code patterns)
   - .github files excluded from linting
 - **Formatting**: Double quotes, 88 character line length, isort integration
 - **Type Checking**:
   - ty (Astral's ultra-fast type checker) configured for Python 3.13
-  - Excludes: migrations, manage.py, .venv, .github, mheg.py (legacy code), pihole.py (requests type stubs)
+  - Excludes: migrations, manage.py, .venv, .github, mheg.py (legacy code), pihole.py (requests type stubs), google_calendar.py (external library type issues)
 - **Error Handling**: Specific exception types (ConnectionError, TimeoutError, ValueError)
 - **Web Scraping**: BeautifulSoup4 for HTML parsing, requests for HTTP calls
 

@@ -17,4 +17,6 @@ urlpatterns = [
     path("weather/", views.weather, name="weather"),
     path("pihole/status/", views.pihole_status, name="pihole_status"),
     path("pihole/disable/", views.pihole_disable, name="pihole_disable"),
+    path("calendar/", views.calendar, name="calendar"),
+    path("calendar/data/", views.calendar_data, name="calendar_data"),
 ]
