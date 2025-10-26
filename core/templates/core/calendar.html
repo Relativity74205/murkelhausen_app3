@@ -51,6 +51,10 @@
         margin-bottom: 1rem;
         font-weight: bold;
     }
+    .field-error {
+        border-color: #dc3545 !important;
+        box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25) !important;
+    }
 </style>
 {% endblock %}
 
@@ -237,11 +241,135 @@
 
     <!-- Handle form submission and modal closing -->
     <script>
+        // Validation function to check if end date/time is before start date/time
+        function validateDateTime(startDateId, startTimeId, endDateId, endTimeId, isWholeDayId, errorContainerId) {
+            const startDateEl = document.getElementById(startDateId);
+            const startTimeEl = document.getElementById(startTimeId);
+            const endDateEl = document.getElementById(endDateId);
+            const endTimeEl = document.getElementById(endTimeId);
+            const isWholeDay = document.getElementById(isWholeDayId).checked;
+            const errorContainer = document.getElementById(errorContainerId);
+
+            const startDate = startDateEl.value;
+            const startTime = startTimeEl.value;
+            const endDate = endDateEl.value;
+            const endTime = endTimeEl.value;
+
+            // Clear previous error and visual indicators
+            errorContainer.innerHTML = '';
+            startDateEl.classList.remove('field-error');
+            startTimeEl.classList.remove('field-error');
+            endDateEl.classList.remove('field-error');
+            endTimeEl.classList.remove('field-error');
+
+            // Validate dates are provided
+            if (!startDate || !endDate) {
+                return true; // Let HTML5 required validation handle this
+            }
+
+            // For whole day events, just compare dates
+            if (isWholeDay) {
+                if (endDate < startDate) {
+                    startDateEl.classList.add('field-error');
+                    endDateEl.classList.add('field-error');
+                    errorContainer.innerHTML = '<div class="alert alert-danger" role="alert">' +
+                        '❌ Das Enddatum darf nicht vor dem Startdatum liegen.' +
+                        '</div>';
+                    return false;
+                }
+                return true;
+            }
+
+            // For timed events, compare date and time
+            if (startTime && endTime) {
+                const startDateTime = new Date(startDate + 'T' + startTime);
+                const endDateTime = new Date(endDate + 'T' + endTime);
+
+                if (endDateTime <= startDateTime) {
+                    startDateEl.classList.add('field-error');
+                    startTimeEl.classList.add('field-error');
+                    endDateEl.classList.add('field-error');
+                    endTimeEl.classList.add('field-error');
+                    errorContainer.innerHTML = '<div class="alert alert-danger" role="alert">' +
+                        '❌ Der Endzeitpunkt muss nach dem Startzeitpunkt liegen.' +
+                        '</div>';
+                    return false;
+                }
+            } else if (endDate < startDate) {
+                // If times are not set, at least check dates
+                startDateEl.classList.add('field-error');
+                endDateEl.classList.add('field-error');
+                errorContainer.innerHTML = '<div class="alert alert-danger" role="alert">' +
+                    '❌ Das Enddatum darf nicht vor dem Startdatum liegen.' +
+                    '</div>';
+                return false;
+            }
+
+            return true;
+        }
+
+        // Clear validation errors when user changes fields
+        function setupValidationClearOnChange(startDateId, startTimeId, endDateId, endTimeId) {
+            const fields = [startDateId, startTimeId, endDateId, endTimeId];
+
+            fields.forEach(fieldId => {
+                const field = document.getElementById(fieldId);
+                if (field) {
+                    field.addEventListener('change', function() {
+                        // Clear error styling from all related fields
+                        fields.forEach(id => {
+                            const el = document.getElementById(id);
+                            if (el) {
+                                el.classList.remove('field-error');
+                            }
+                        });
+                    });
+                }
+            });
+        }
+
         // Set today's date as default for start_date
         document.addEventListener('DOMContentLoaded', function() {
             const today = new Date().toISOString().split('T')[0];
             document.getElementById('start_date').value = today;
             document.getElementById('end_date').value = today;
+
+            // Setup validation error clearing for create form
+            setupValidationClearOnChange('start_date', 'start_time', 'end_date', 'end_time');
+
+            // Setup validation error clearing for edit form
+            setupValidationClearOnChange('edit_start_date', 'edit_start_time', 'edit_end_date', 'edit_end_time');
+        });
+
+        // Intercept form submission for create appointment to validate
+        document.addEventListener('htmx:configRequest', function(event) {
+            const form = event.detail.elt;
+
+            // Check if this is the create appointment form
+            if (form.getAttribute('hx-target') === '#appointment-message') {
+                const isValid = validateDateTime(
+                    'start_date', 'start_time', 'end_date', 'end_time',
+                    'is_whole_day', 'appointment-message'
+                );
+
+                if (!isValid) {
+                    event.preventDefault();
+                    return false;
+                }
+            }
+
+            // Check if this is the edit appointment form
+            if (form.getAttribute('hx-target') === '#edit-appointment-message') {
+                const isValid = validateDateTime(
+                    'edit_start_date', 'edit_start_time', 'edit_end_date', 'edit_end_time',
+                    'edit_is_whole_day', 'edit-appointment-message'
+                );
+
+                if (!isValid) {
+                    event.preventDefault();
+                    return false;
+                }
+            }
         });
 
         document.body.addEventListener('htmx:afterRequest', function(event) {
