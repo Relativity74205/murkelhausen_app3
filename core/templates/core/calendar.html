@@ -493,21 +493,28 @@
                 if (event.detail.successful) {
                     const response = JSON.parse(event.detail.xhr.response);
                     if (response.success) {
-                        // Close modal immediately
+                        // Close modal
                         const modalElement = document.getElementById('newAppointmentModal');
                         const modal = bootstrap.Modal.getInstance(modalElement);
-                        if (modal) {
-                            modal.hide();
-                        }
 
-                        // Clean up modal backdrop and body classes
-                        setTimeout(() => {
+                        // Set up a one-time event listener for when modal is fully hidden
+                        const cleanupHandler = () => {
+                            // Force cleanup of any remaining modal artifacts
                             const backdrops = document.querySelectorAll('.modal-backdrop');
                             backdrops.forEach(backdrop => backdrop.remove());
                             document.body.classList.remove('modal-open');
-                            document.body.style.overflow = '';
-                            document.body.style.paddingRight = '';
-                        }, 300);
+                            document.body.style.removeProperty('overflow');
+                            document.body.style.removeProperty('padding-right');
+
+                            // Remove this event listener
+                            modalElement.removeEventListener('hidden.bs.modal', cleanupHandler);
+                        };
+
+                        modalElement.addEventListener('hidden.bs.modal', cleanupHandler, { once: true });
+
+                        if (modal) {
+                            modal.hide();
+                        }
 
                         // Show success toast
                         showSuccessToast(response.message);
@@ -707,21 +714,28 @@
                 if (event.detail.successful) {
                     const response = JSON.parse(event.detail.xhr.response);
                     if (response.success) {
-                        // Close modal immediately
+                        // Close modal
                         const modalElement = document.getElementById('editAppointmentModal');
                         const modal = bootstrap.Modal.getInstance(modalElement);
-                        if (modal) {
-                            modal.hide();
-                        }
 
-                        // Clean up modal backdrop and body classes
-                        setTimeout(() => {
+                        // Set up a one-time event listener for when modal is fully hidden
+                        const cleanupHandler = () => {
+                            // Force cleanup of any remaining modal artifacts
                             const backdrops = document.querySelectorAll('.modal-backdrop');
                             backdrops.forEach(backdrop => backdrop.remove());
                             document.body.classList.remove('modal-open');
-                            document.body.style.overflow = '';
-                            document.body.style.paddingRight = '';
-                        }, 300);
+                            document.body.style.removeProperty('overflow');
+                            document.body.style.removeProperty('padding-right');
+
+                            // Remove this event listener
+                            modalElement.removeEventListener('hidden.bs.modal', cleanupHandler);
+                        };
+
+                        modalElement.addEventListener('hidden.bs.modal', cleanupHandler, { once: true });
+
+                        if (modal) {
+                            modal.hide();
+                        }
 
                         // Show success toast
                         showSuccessToast(response.message);
