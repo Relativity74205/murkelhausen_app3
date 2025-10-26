@@ -19,6 +19,7 @@ from family_intranet.repositories.google_calendar import (
     create_appointment,
     delete_appointment,
     get_list_of_appointments,
+    update_appointment,
 )
 from family_intranet.repositories.gymbroich import (
     get_vertretungsplan,
@@ -325,11 +326,14 @@ def calendar_create(request):
                 # Default to 1 hour duration
                 end = start.replace(hour=start.hour + 1)
 
-        # Create Event object
+        # Create Event object with explicit timezone
         event = Event(
             summary=event_name,
             start=start,
             end=end,
+            timezone="Europe/Berlin"
+            if not (is_whole_day or not start_time_str)
+            else None,
             description=description if description else None,
         )
 
@@ -420,4 +424,158 @@ def calendar_delete(request):
         logger.error(f"Error deleting appointment: {e}", exc_info=True)
         return JsonResponse(
             {"success": False, "error": f"Fehler beim Löschen: {e!s}"}, status=500
+        )
+
+
+@require_POST
+def calendar_update(request):
+    """Update an existing appointment."""
+    logger = logging.getLogger(__name__)
+
+    try:
+        # Get form data
+        appointment_id = request.POST.get("appointment_id")
+        original_calendar_name = request.POST.get("original_calendar_name")
+        new_calendar_name = request.POST.get("calendar")
+        event_name = request.POST.get("event_name")
+        start_date_str = request.POST.get("start_date")
+        start_time_str = request.POST.get("start_time")
+        end_date_str = request.POST.get("end_date")
+        end_time_str = request.POST.get("end_time")
+        is_whole_day = request.POST.get("is_whole_day") == "on"
+        description = request.POST.get("description", "")
+
+        # Validate required fields
+        if not all(
+            [
+                appointment_id,
+                original_calendar_name,
+                new_calendar_name,
+                event_name,
+                start_date_str,
+                end_date_str,
+            ]
+        ):
+            return JsonResponse(
+                {"success": False, "error": "Bitte alle Pflichtfelder ausfüllen"},
+                status=400,
+            )
+
+        # Get calendar IDs from settings
+        if original_calendar_name not in GOOGLE_CALENDAR_SETTINGS.calendars:
+            return JsonResponse(
+                {
+                    "success": False,
+                    "error": f"Kalender '{original_calendar_name}' nicht gefunden",
+                },
+                status=400,
+            )
+
+        if new_calendar_name not in GOOGLE_CALENDAR_SETTINGS.calendars:
+            return JsonResponse(
+                {
+                    "success": False,
+                    "error": f"Kalender '{new_calendar_name}' nicht gefunden",
+                },
+                status=400,
+            )
+
+        original_calendar_id = GOOGLE_CALENDAR_SETTINGS.calendars[
+            original_calendar_name
+        ]
+        new_calendar_id = GOOGLE_CALENDAR_SETTINGS.calendars[new_calendar_name]
+
+        # Parse dates
+        start_date = datetime.strptime(start_date_str, "%Y-%m-%d").date()
+        end_date = datetime.strptime(end_date_str, "%Y-%m-%d").date()
+
+        # Create start and end datetime objects
+        berlin_tz = pytz.timezone("Europe/Berlin")
+
+        if is_whole_day or not start_time_str:
+            # All-day event
+            start = start_date
+            end = end_date
+        else:
+            # Timed event
+            start_time = datetime.strptime(start_time_str, "%H:%M").time()
+            start = berlin_tz.localize(datetime.combine(start_date, start_time))
+
+            if end_time_str:
+                end_time = datetime.strptime(end_time_str, "%H:%M").time()
+                end = berlin_tz.localize(datetime.combine(end_date, end_time))
+            else:
+                # Default to 1 hour duration
+                end = start.replace(hour=start.hour + 1)
+
+        # Create Event object with explicit timezone
+        event = Event(
+            summary=event_name,
+            start=start,
+            end=end,
+            timezone="Europe/Berlin"
+            if not (is_whole_day or not start_time_str)
+            else None,
+            description=description if description else None,
+            event_id=appointment_id,
+        )
+
+        # If calendar changed, need to delete from old and create in new
+        if original_calendar_id != new_calendar_id:
+            logger.info(
+                f"Moving appointment '{event_name}' from "
+                f"'{original_calendar_name}' to '{new_calendar_name}'"
+            )
+            # Delete from original calendar
+            delete_event = Event(
+                summary="",  # Dummy value
+                start=datetime.now(tz=pytz.UTC).date(),  # Dummy
+                event_id=appointment_id,
+            )
+            delete_appointment(delete_event, original_calendar_id)
+            # Create in new calendar (without event_id to create new)
+            new_event = Event(
+                summary=event_name,
+                start=start,
+                end=end,
+                timezone="Europe/Berlin"
+                if not (is_whole_day or not start_time_str)
+                else None,
+                description=description if description else None,
+            )
+            create_appointment(new_event, new_calendar_id)
+        else:
+            # Update in same calendar
+            logger.info(
+                f"Updating appointment '{event_name}' in "
+                f"calendar '{original_calendar_name}'"
+            )
+            update_appointment(event, original_calendar_id)
+
+        return JsonResponse(
+            {
+                "success": True,
+                "message": f"Termin '{event_name}' wurde erfolgreich aktualisiert",
+            }
+        )
+
+    except ValueError as e:
+        logger.error(f"Validation error updating appointment: {e}", exc_info=True)
+        return JsonResponse(
+            {"success": False, "error": f"Ungültige Eingabe: {e!s}"}, status=400
+        )
+    except (ConnectionError, TimeoutError) as e:
+        logger.error(f"Network error updating appointment: {e}", exc_info=True)
+        return JsonResponse(
+            {
+                "success": False,
+                "error": "Netzwerkfehler beim Aktualisieren des Termins",
+            },
+            status=500,
+        )
+    except Exception as e:
+        logger.error(f"Error updating appointment: {e}", exc_info=True)
+        return JsonResponse(
+            {"success": False, "error": f"Fehler beim Aktualisieren: {e!s}"},
+            status=500,
         )

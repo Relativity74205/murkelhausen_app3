@@ -73,8 +73,8 @@
 ### Key Files & Locations
 - **Settings**: `family_intranet/settings.py` (configured with django-htmx)
 - **Main URLs**: `family_intranet/urls.py` (includes core.urls)
-- **Core URLs**: `core/urls.py` (home, calendar, calendar_data, calendar_create, calendar_delete, football_games, handball_games, muelltermine, vertretungsplan, pihole_status, pihole_disable)
-- **Core Views**: `core/views.py` (home, calendar, calendar_data, calendar_create, calendar_delete, football_games, handball_games, muelltermine, vertretungsplan, pihole_status, pihole_disable)
+- **Core URLs**: `core/urls.py` (home, calendar, calendar_data, calendar_create, calendar_update, calendar_delete, football_games, handball_games, muelltermine, vertretungsplan, pihole_status, pihole_disable)
+- **Core Views**: `core/views.py` (home, calendar, calendar_data, calendar_create, calendar_update, calendar_delete, football_games, handball_games, muelltermine, vertretungsplan, pihole_status, pihole_disable)
 - **Templates**:
   - `core/templates/core/home.html` (Bootstrap + HTMX)
   - `core/templates/core/calendar.html` (Family calendar display)
@@ -110,15 +110,17 @@
   - `/calendar/` (view appointments)
   - `/calendar/data/` (HTMX data endpoint)
   - `/calendar/create/` (POST endpoint to create appointments)
+  - `/calendar/update/` (POST endpoint to update appointments)
   - `/calendar/delete/` (POST endpoint to delete appointments)
 - **Views**:
   - `core.views.calendar` (`core/views.py:209-211`)
-  - `core.views.calendar_data` (`core/views.py:214-249`)
-  - `core.views.calendar_create` (`core/views.py:252-347`)
-  - `core.views.calendar_delete` (`core/views.py:350-401`)
+  - `core.views.calendar_data` (`core/views.py:214-271`)
+  - `core.views.calendar_create` (`core/views.py:274-369`)
+  - `core.views.calendar_delete` (`core/views.py:372-425`)
+  - `core.views.calendar_update` (`core/views.py:428-571`)
 - **Template**: `core/templates/core/calendar.html`, `core/templates/core/calendar_content.html`
 - **Repository**: `family_intranet/repositories/google_calendar.py`
-- **Description**: Displays all family calendar appointments for the next 7 days from Google Calendar, with ability to create and delete appointments
+- **Description**: Displays all family calendar appointments for the next 7 days from Google Calendar, with full CRUD operations (create, read, update, delete)
 - **Features**:
   - Fetches appointments from all configured family calendars (Arkadius, Familie, Erik, Mattis, Andrea, Geburtstage)
   - **Parallel calendar loading** using ThreadPoolExecutor (max 6 workers) for faster page load
@@ -141,8 +143,16 @@
     - HTMX form submission with success/error messages
     - Automatically reloads calendar after successful creation
     - Form validation and error handling
+  - **Edit Appointments**:
+    - Edit button on each appointment card (grouped with delete button)
+    - Modal form pre-populated with current appointment data
+    - Can modify: event name, calendar, dates/times, whole-day status, description
+    - Supports moving appointments between calendars (delete from old, create in new)
+    - HTMX form submission with success/error messages
+    - Automatically reloads calendar after successful update
+    - Form validation and error handling
   - **Delete Appointments**:
-    - Delete button on each appointment card
+    - Delete button on each appointment card (grouped with edit button)
     - Confirmation dialog before deletion
     - Visual feedback during deletion (button shows "⏳ Löschen...")
     - Success indicator (button shows "✅ Gelöscht")
@@ -371,7 +381,7 @@
 - **Code Quality**:
   - Ruff configured for Django projects with comprehensive rules
   - Per-file ignores for Django-generated files (manage.py, migrations)
-  - DTZ007 ignored for handballnordrhein.py, fussballde.py, core/views.py (date-only parsing from form inputs)
+  - core/views.py: DTZ007, PLR0911 ignored (date-only parsing from form inputs, multiple return statements in update view)
   - mheg.py: DTZ005, DTZ011, N815, E501, PLR2004 ignored (legacy code)
   - gymbroich.py: DTZ005, DTZ007, N815, E501, S113, SIM210, PLW2901, PLR2004 ignored (API naming conventions)
   - pihole.py: TRY003, EM101, EM102 ignored (exception message formatting)

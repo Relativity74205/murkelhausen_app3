@@ -75,15 +75,29 @@
                                                 {% endif %}
                                             {% endif %}
 
-                                            <!-- Delete Button -->
+                                            <!-- Edit and Delete Buttons -->
                                             {% if appointment.id %}
-                                                <button class="btn btn-sm btn-outline-danger mt-2 delete-appointment-btn"
-                                                        data-appointment-id="{{ appointment.id }}"
-                                                        data-appointment-name="{{ appointment.event_name }}"
-                                                        data-calendar-id="{{ appointment.calendar_id }}"
-                                                        data-calendar-name="{{ appointment.calendar_name }}">
-                                                    🗑️ Löschen
-                                                </button>
+                                                <div class="btn-group mt-2" role="group">
+                                                    <button class="btn btn-sm btn-outline-primary edit-appointment-btn"
+                                                            data-appointment-id="{{ appointment.id }}"
+                                                            data-appointment-name="{{ appointment.event_name }}"
+                                                            data-calendar-id="{{ appointment.calendar_id }}"
+                                                            data-calendar-name="{{ appointment.calendar_name }}"
+                                                            data-start-date="{{ appointment.start_date|date:'Y-m-d' }}"
+                                                            data-start-time="{{ appointment.start_time }}"
+                                                            data-end-date="{{ appointment.end_date|date:'Y-m-d' }}"
+                                                            data-end-time="{{ appointment.end_time }}"
+                                                            data-is-whole-day="{{ appointment.is_whole_day|yesno:'true,false' }}">
+                                                        ✏️ Bearbeiten
+                                                    </button>
+                                                    <button class="btn btn-sm btn-outline-danger delete-appointment-btn"
+                                                            data-appointment-id="{{ appointment.id }}"
+                                                            data-appointment-name="{{ appointment.event_name }}"
+                                                            data-calendar-id="{{ appointment.calendar_id }}"
+                                                            data-calendar-name="{{ appointment.calendar_name }}">
+                                                        🗑️ Löschen
+                                                    </button>
+                                                </div>
                                             {% endif %}
                                         </div>
                                     </div>

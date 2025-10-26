@@ -141,6 +141,83 @@
         </div>
     </div>
 
+    <!-- Edit Appointment Modal -->
+    <div class="modal fade" id="editAppointmentModal" tabindex="-1" aria-labelledby="editAppointmentModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editAppointmentModalLabel">Termin bearbeiten</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form hx-post="{% url 'calendar_update' %}"
+                      hx-target="#edit-appointment-message"
+                      hx-swap="innerHTML">
+                    {% csrf_token %}
+                    <div class="modal-body">
+                        <div id="edit-appointment-message"></div>
+
+                        <!-- Hidden fields for appointment ID and original calendar -->
+                        <input type="hidden" id="edit_appointment_id" name="appointment_id">
+                        <input type="hidden" id="edit_original_calendar_name" name="original_calendar_name">
+
+                        <div class="mb-3">
+                            <label for="edit_calendar" class="form-label">Kalender</label>
+                            <select class="form-select" id="edit_calendar" name="calendar" required>
+                                <option value="Arkadius">Arkadius</option>
+                                <option value="Familie">Familie</option>
+                                <option value="Erik">Erik</option>
+                                <option value="Mattis">Mattis</option>
+                                <option value="Andrea">Andrea</option>
+                                <option value="Geburtstage">Geburtstage</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="edit_event_name" class="form-label">Terminname</label>
+                            <input type="text" class="form-control" id="edit_event_name" name="event_name" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="edit_start_date" class="form-label">Startdatum</label>
+                            <input type="date" class="form-control" id="edit_start_date" name="start_date" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="edit_start_time" class="form-label">Startzeit (optional)</label>
+                            <input type="time" class="form-control" id="edit_start_time" name="start_time">
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="edit_end_date" class="form-label">Enddatum</label>
+                            <input type="date" class="form-control" id="edit_end_date" name="end_date" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="edit_end_time" class="form-label">Endzeit (optional)</label>
+                            <input type="time" class="form-control" id="edit_end_time" name="end_time">
+                        </div>
+
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" id="edit_is_whole_day" name="is_whole_day">
+                            <label class="form-check-label" for="edit_is_whole_day">
+                                Ganztägig
+                            </label>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="edit_description" class="form-label">Beschreibung (optional)</label>
+                            <textarea class="form-control" id="edit_description" name="description" rows="3"></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Abbrechen</button>
+                        <button type="submit" class="btn btn-primary">Änderungen speichern</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <!-- Main Content -->
     <div class="container my-5" id="calendar-content"
          hx-get="{% url 'calendar_data' %}"
@@ -300,6 +377,119 @@
                     button.disabled = false;
                     button.innerHTML = '🗑️ Löschen';
                 });
+            }
+
+            // Handle edit button clicks
+            if (event.target.classList.contains('edit-appointment-btn') ||
+                event.target.closest('.edit-appointment-btn')) {
+
+                const button = event.target.classList.contains('edit-appointment-btn')
+                    ? event.target
+                    : event.target.closest('.edit-appointment-btn');
+
+                // Get appointment data from button attributes
+                const appointmentId = button.dataset.appointmentId;
+                const appointmentName = button.dataset.appointmentName;
+                const calendarName = button.dataset.calendarName;
+                const startDate = button.dataset.startDate;
+                const startTime = button.dataset.startTime;
+                const endDate = button.dataset.endDate;
+                const endTime = button.dataset.endTime;
+                const isWholeDay = button.dataset.isWholeDay === 'true';
+
+                // Populate edit form
+                document.getElementById('edit_appointment_id').value = appointmentId;
+                document.getElementById('edit_original_calendar_name').value = calendarName;
+                document.getElementById('edit_calendar').value = calendarName;
+                document.getElementById('edit_event_name').value = appointmentName;
+                document.getElementById('edit_start_date').value = startDate;
+                document.getElementById('edit_start_time').value = startTime;
+                document.getElementById('edit_end_date').value = endDate;
+                document.getElementById('edit_end_time').value = endTime;
+                document.getElementById('edit_is_whole_day').checked = isWholeDay;
+
+                // Handle whole-day state
+                const editStartTime = document.getElementById('edit_start_time');
+                const editEndTime = document.getElementById('edit_end_time');
+                if (isWholeDay) {
+                    editStartTime.disabled = true;
+                    editEndTime.disabled = true;
+                } else {
+                    editStartTime.disabled = false;
+                    editEndTime.disabled = false;
+                }
+
+                // Show edit modal
+                const editModal = new bootstrap.Modal(document.getElementById('editAppointmentModal'));
+                editModal.show();
+            }
+        });
+
+        // Handle edit form whole-day checkbox
+        document.getElementById('edit_is_whole_day').addEventListener('change', function() {
+            const startTime = document.getElementById('edit_start_time');
+            const endTime = document.getElementById('edit_end_time');
+
+            if (this.checked) {
+                startTime.disabled = true;
+                endTime.disabled = true;
+                startTime.value = '';
+                endTime.value = '';
+            } else {
+                startTime.disabled = false;
+                endTime.disabled = false;
+            }
+        });
+
+        // Handle edit form submission response
+        document.body.addEventListener('htmx:afterRequest', function(event) {
+            if (event.detail.target.id === 'edit-appointment-message') {
+                if (event.detail.successful) {
+                    const response = JSON.parse(event.detail.xhr.response);
+                    if (response.success) {
+                        // Show success message
+                        event.detail.target.innerHTML = '<div class="alert alert-success" role="alert">' +
+                            '✅ ' + response.message +
+                            '</div>';
+
+                        // Reset form
+                        event.detail.target.closest('form').reset();
+
+                        // Reload calendar data
+                        document.body.dispatchEvent(new Event('refreshCalendar'));
+
+                        // Close modal after 2 seconds
+                        setTimeout(() => {
+                            const modalElement = document.getElementById('editAppointmentModal');
+                            const modal = bootstrap.Modal.getInstance(modalElement);
+                            if (modal) {
+                                modal.hide();
+                            }
+
+                            // Remove any leftover backdrops
+                            setTimeout(() => {
+                                const backdrops = document.querySelectorAll('.modal-backdrop');
+                                backdrops.forEach(backdrop => backdrop.remove());
+                                document.body.classList.remove('modal-open');
+                                document.body.style.overflow = '';
+                                document.body.style.paddingRight = '';
+
+                                // Clear message
+                                event.detail.target.innerHTML = '';
+                            }, 500);
+                        }, 2000);
+                    } else {
+                        // Show error message
+                        event.detail.target.innerHTML = '<div class="alert alert-danger" role="alert">' +
+                            '❌ Fehler: ' + response.error +
+                            '</div>';
+                    }
+                } else {
+                    // Network error
+                    event.detail.target.innerHTML = '<div class="alert alert-danger" role="alert">' +
+                        '❌ Netzwerkfehler beim Aktualisieren des Termins' +
+                        '</div>';
+                }
             }
         });
     </script>
