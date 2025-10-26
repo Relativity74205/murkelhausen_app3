@@ -1,5 +1,6 @@
 import logging
 from collections import defaultdict
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import date, datetime
 
 import pytz
@@ -214,15 +215,36 @@ def calendar(request):
 def calendar_data(request):
     # Async data loading for HTMX
     try:
-        # Fetch appointments from all configured calendars for the next 7 days
+        # Fetch appointments from all calendars in parallel for better performance
         all_appointments = []
-        for calendar_name, calendar_id in GOOGLE_CALENDAR_SETTINGS.calendars.items():
-            appointments = get_list_of_appointments(
-                calendar_id=calendar_id,
-                calendar_name=calendar_name,
-                amount_of_days_to_show=7,
-            )
-            all_appointments.extend(appointments)
+
+        # Use ThreadPoolExecutor to fetch calendars concurrently
+        with ThreadPoolExecutor(max_workers=6) as executor:
+            # Submit all calendar fetch tasks
+            calendars = GOOGLE_CALENDAR_SETTINGS.calendars.items()
+            future_to_calendar = {
+                executor.submit(
+                    get_list_of_appointments,
+                    calendar_id=calendar_id,
+                    calendar_name=calendar_name,
+                    amount_of_days_to_show=7,
+                ): calendar_name
+                for calendar_name, calendar_id in calendars
+            }
+
+            # Collect results as they complete
+            for future in as_completed(future_to_calendar):
+                calendar_name = future_to_calendar[future]
+                try:
+                    appointments = future.result()
+                    all_appointments.extend(appointments)
+                except Exception as e:
+                    # Log error but continue with other calendars
+                    logger = logging.getLogger(__name__)
+                    logger.error(
+                        f"Error fetching calendar '{calendar_name}': {e}",
+                        exc_info=True,
+                    )
 
         # Sort all appointments by start timestamp
         all_appointments.sort(key=lambda x: x.start_timestamp)

@@ -121,6 +121,8 @@
 - **Description**: Displays all family calendar appointments for the next 7 days from Google Calendar, with ability to create and delete appointments
 - **Features**:
   - Fetches appointments from all configured family calendars (Arkadius, Familie, Erik, Mattis, Andrea, Geburtstage)
+  - **Parallel calendar loading** using ThreadPoolExecutor (max 6 workers) for faster page load
+  - Continues loading even if one calendar fails (error logged, other calendars still displayed)
   - Displays appointments grouped by date
   - Shows appointment time (or "Ganztägig" for all-day events)
   - Color-coded calendar badges for each family member:
