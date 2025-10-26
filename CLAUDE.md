@@ -139,12 +139,13 @@
     - Modal form with calendar selection dropdown
     - Fields: event name, start/end date/time, description
     - Whole-day event checkbox (disables time fields)
-    - Auto-fills end date to match start date
+    - Smart defaults: today's date, end date auto-updates, time minutes set to :00
     - HTMX form submission with success/error messages
     - Automatically reloads calendar after successful creation
-    - Form validation and error handling
+    - Form validation and comprehensive error handling
+    - User-friendly error messages for Google Calendar API errors
   - **Edit Appointments**:
-    - Edit button on each appointment card (grouped with delete button)
+    - Edit button on each appointment card (spaced from delete button)
     - Modal form pre-populated with current appointment data
     - Can modify: event name, calendar, dates/times, whole-day status, description
     - Supports moving appointments between calendars (delete from old, create in new)
@@ -381,7 +382,7 @@
 - **Code Quality**:
   - Ruff configured for Django projects with comprehensive rules
   - Per-file ignores for Django-generated files (manage.py, migrations)
-  - core/views.py: DTZ007, PLR0911 ignored (date-only parsing from form inputs, multiple return statements in update view)
+  - core/views.py: DTZ007, PLR0911, PLR0912, PLR0915, PLR2004 ignored (date parsing, multiple returns/branches/statements in complex views, HTTP status codes)
   - mheg.py: DTZ005, DTZ011, N815, E501, PLR2004 ignored (legacy code)
   - gymbroich.py: DTZ005, DTZ007, N815, E501, S113, SIM210, PLW2901, PLR2004 ignored (API naming conventions)
   - pihole.py: TRY003, EM101, EM102 ignored (exception message formatting)

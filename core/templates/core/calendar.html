@@ -237,6 +237,13 @@
 
     <!-- Handle form submission and modal closing -->
     <script>
+        // Set today's date as default for start_date
+        document.addEventListener('DOMContentLoaded', function() {
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('start_date').value = today;
+            document.getElementById('end_date').value = today;
+        });
+
         document.body.addEventListener('htmx:afterRequest', function(event) {
             // Check if this was the create appointment form
             if (event.detail.target.id === 'appointment-message') {
@@ -308,10 +315,35 @@
         // Auto-fill end date when start date changes
         document.getElementById('start_date').addEventListener('change', function() {
             const endDate = document.getElementById('end_date');
-            if (!endDate.value) {
-                endDate.value = this.value;
+            const startDateValue = this.value;
+
+            // Update end date if:
+            // 1. No end date is selected, OR
+            // 2. End date is before start date
+            if (!endDate.value || endDate.value < startDateValue) {
+                endDate.value = startDateValue;
             }
         });
+
+        // Set minutes to 00 when user starts selecting a time (only if no value set)
+        function setupTimeInputDefaults(timeInputId) {
+            const timeInput = document.getElementById(timeInputId);
+            let hasBeenSet = false;
+
+            timeInput.addEventListener('focus', function() {
+                // Only set default if field is empty
+                if (!this.value && !hasBeenSet) {
+                    const now = new Date();
+                    const hours = String(now.getHours()).padStart(2, '0');
+                    this.value = hours + ':00';
+                    hasBeenSet = true;
+                }
+            });
+        }
+
+        // Apply to both start and end time inputs
+        setupTimeInputDefaults('start_time');
+        setupTimeInputDefaults('end_time');
 
         // Handle delete button clicks with confirmation
         document.addEventListener('click', function(event) {
