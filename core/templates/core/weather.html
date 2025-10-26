@@ -355,11 +355,33 @@
     {% load l10n %}
     <script>
         document.addEventListener('DOMContentLoaded', function () {
+            // Rain color function (shared across all charts)
+            function getRainColor(rain) {
+                if (rain >= 50) {  // sehr starker Regen
+                    return "rgba(255,50,50,0.9)";
+                } else if (rain >= 10) {  // starker Regen
+                    return "rgba(0,0,255,0.9)";
+                } else if (rain >= 2.5) {  // maessiger Regen
+                    return "rgba(50,50,255,0.75)";
+                } else if (rain >= 1) {  // leichter Regen
+                    return "rgba(100,100,255,0.5)";
+                } else if (rain >= 0.5) {  // sehr leichter Regen
+                    return "rgba(200,200,255,0.5)";
+                } else {  // minimaler Regen
+                    return "rgba(200,200,255,0.25)";
+                }
+            }
+
             {% if weather.minutely %}
             // Short term rain forecast (1 hour - minutely)
             const minutelyData = [
                 {% for minute in weather.minutely %}
-                ['{{ minute.time }}', {% localize off %}{{ minute.rain }}{% endlocalize %}],
+                {
+                    x: {{ forloop.counter0 }},
+                    y: {% localize off %}{{ minute.rain }}{% endlocalize %},
+                    color: getRainColor({% localize off %}{{ minute.rain }}{% endlocalize %}),
+                    name: '{{ minute.time }}'
+                },
                 {% endfor %}
             ];
 
@@ -370,8 +392,12 @@
                 title: { text: 'Regen-Vorhersage für die nächsten 60 Minuten' },
                 legend: { enabled: false },
                 xAxis: {
-                    type: 'category',
-                    labels: { step: 5 }
+                    categories: minutelyData.map(item => item.name),
+                    labels: {
+                        step: 5,
+                        rotation: -45,
+                        align: 'right'
+                    }
                 },
                 yAxis: {
                     title: { text: 'Erwarteter Regen in mm/h' },
@@ -381,8 +407,14 @@
                 series: [{
                     name: 'Erwarteter Regen in mm/h',
                     colorByPoint: true,
-                    data: minutelyData,
-                    tooltip: { valueDecimals: 1 }
+                    data: minutelyData.map(item => ({
+                        y: item.y,
+                        color: item.color
+                    })),
+                    tooltip: {
+                        valueDecimals: 1,
+                        valueSuffix: ' mm/h'
+                    }
                 }]
             });
             {% endif %}
@@ -399,22 +431,6 @@
                 ['{{ hour.datetime }}', {% localize off %}{{ hour.feels_like }}{% endlocalize %}],
                 {% endfor %}
             ];
-
-            function getRainColor(rain) {
-                if (rain >= 50) {  // sehr starker Regen
-                    return "rgba(255,50,50,0.9)";
-                } else if (rain >= 10) {  // starker Regen
-                    return "rgba(0,0,255,0.9)";
-                } else if (rain >= 2.5) {  // maessiger Regen
-                    return "rgba(50,50,255,0.75)";
-                } else if (rain >= 1) {  // leichter Regen
-                    return "rgba(100,100,255,0.5)";
-                } else if (rain >= 0.5) {  // sehr leichter Regen
-                    return "rgba(200,200,255,0.5)";
-                } else {  // minimaler Regen
-                    return "rgba(200,200,255,0.25)";
-                }
-            }
 
             const hourlyRain = [
                 {% for hour in weather.hourly|slice:":48" %}

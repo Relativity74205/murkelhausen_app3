@@ -22,4 +22,6 @@ urlpatterns = [
     path("calendar/create/", views.calendar_create, name="calendar_create"),
     path("calendar/update/", views.calendar_update, name="calendar_update"),
     path("calendar/delete/", views.calendar_delete, name="calendar_delete"),
+    path("work-calendar/", views.work_calendar, name="work_calendar"),
+    path("work-calendar/data/", views.work_calendar_data, name="work_calendar_data"),
 ]

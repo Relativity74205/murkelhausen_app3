@@ -196,6 +196,12 @@ GOOGLE_CALENDAR_SETTINGS = GoogleCalendarSettings(
     },
 )
 
+# Outlook Work Calendar (ICS feed)
+OUTLOOK_CALENDAR_URL = os.environ.get(
+    "OUTLOOK_CALENDAR_URL",
+    "https://outlook.office365.com/owa/calendar/ab698696d55f495da6d8087de90e6bf8@auxmoney.com/224d53aba3a64df69329d8567eace684477164590746596125/S-1-8-1202830513-731510667-3198393615-1294255192/reachcalendar.ics",
+)
+
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,

@@ -71,21 +71,24 @@
 - **Virtual Environment**: `.venv` (created by uv)
 
 ### Key Files & Locations
-- **Settings**: `family_intranet/settings.py` (configured with django-htmx, HTMX_TIMEOUT)
+- **Settings**: `family_intranet/settings.py` (configured with django-htmx, HTMX_TIMEOUT, OUTLOOK_CALENDAR_URL)
 - **Main URLs**: `family_intranet/urls.py` (includes core.urls)
-- **Core URLs**: `core/urls.py` (home, calendar, calendar_data, calendar_create, calendar_update, calendar_delete, football_games, handball_games, muelltermine, vertretungsplan, pihole_status, pihole_disable)
-- **Core Views**: `core/views.py` (home, calendar, calendar_data, calendar_create, calendar_update, calendar_delete, football_games, handball_games, muelltermine, vertretungsplan, pihole_status, pihole_disable)
+- **Core URLs**: `core/urls.py` (home, calendar, calendar_data, calendar_create, calendar_update, calendar_delete, work_calendar, work_calendar_data, football_games, handball_games, muelltermine, vertretungsplan, pihole_status, pihole_disable)
+- **Core Views**: `core/views.py` (home, calendar, calendar_data, calendar_create, calendar_update, calendar_delete, work_calendar, work_calendar_data, football_games, handball_games, muelltermine, vertretungsplan, pihole_status, pihole_disable)
 - **Context Processors**: `core/context_processors.py` (htmx_timeout - makes HTMX_TIMEOUT available to all templates)
 - **Static Files**: `core/static/core/` (favicon.svg - browser tab icon)
 - **Templates**:
   - `core/templates/core/home.html` (Bootstrap + HTMX)
   - `core/templates/core/calendar.html` (Family calendar display)
+  - `core/templates/core/work_calendar.html` (Work calendar display)
+  - `core/templates/core/work_calendar_content.html` (Work calendar content partial)
   - `core/templates/core/football_games.html` (Football schedule display)
   - `core/templates/core/handball_games.html` (Handball schedule display)
   - `core/templates/core/muelltermine.html` (Trash collection schedule)
   - `core/templates/core/vertretungsplan.html` (School substitution schedule)
 - **Repositories**:
   - `family_intranet/repositories/google_calendar.py` (Google Calendar API integration)
+  - `family_intranet/repositories/outlook_calendar.py` (Outlook ICS calendar integration)
   - `family_intranet/repositories/fussballde.py` (Football web scraping)
   - `family_intranet/repositories/handballnordrhein.py` (Handball web scraping)
   - `family_intranet/repositories/mheg.py` (MHEG waste management API)
@@ -189,10 +192,50 @@
   - google_calendar.py excluded from type checking (ty) due to external library type issues
   - Per-file ruff ignores for legacy code patterns: SIM102, RET504, TRY003, EM102, DTZ011, B905, PLW2901, PLW0127, C416
 
-#### 3. Football Games Schedule
+#### 3. Work Calendar (Outlook Integration)
+- **Status**: ✅ Complete
+- **URLs**:
+  - `/work-calendar/` (view appointments)
+  - `/work-calendar/data/` (HTMX data endpoint)
+- **Views**:
+  - `core.views.work_calendar` (`core/views.py:595-597`)
+  - `core.views.work_calendar_data` (`core/views.py:600-627`)
+- **Templates**:
+  - `core/templates/core/work_calendar.html`
+  - `core/templates/core/work_calendar_content.html`
+- **Repository**: `family_intranet/repositories/outlook_calendar.py`
+- **Description**: Displays work appointments from Outlook calendar via ICS feed (read-only)
+- **Features**:
+  - Fetches appointments from Outlook ICS calendar feed
+  - Displays appointments grouped by date
+  - Shows appointment time (or "Ganztägig" for all-day events)
+  - Work calendar badge (blue) for all appointments
+  - Recurring event badge for repeating appointments
+  - Multi-day event support with date range display
+  - Location and description display
+  - HTMX async loading with spinner
+  - Configurable time range (3, 7, 14, or 30 days)
+  - Error handling for network/API issues
+  - Responsive Bootstrap layout with card-based design
+  - **Read-only**: No create/edit/delete functionality (view only)
+- **Dependencies**: requests, icalendar, pydantic, babel
+- **Data Model**: `WorkAppointment` Pydantic BaseModel with fields:
+  - event_name (str)
+  - start_timestamp, end_timestamp (datetime)
+  - start_date, end_date (date)
+  - start_time, end_time (str)
+  - description, location (str | None)
+  - is_whole_day, is_recurring (bool)
+- **API**: Outlook ICS calendar feed (public URL)
+- **Configuration**:
+  - `OUTLOOK_CALENDAR_URL` environment variable (defaults to hardcoded URL)
+  - Configured in `family_intranet/settings.py`
+  - URL format: `https://outlook.office365.com/owa/calendar/.../reachcalendar.ics`
+
+#### 4. Football Games Schedule
 - **Status**: ✅ Complete
 - **URL**: `/football/`
-- **View**: `core.views.football_games` (`core/views.py:44-56`)
+- **View**: `core.views.football_games` (`core/views.py:79-81`)
 - **Template**: `core/templates/core/football_games.html`
 - **Repository**: `family_intranet/repositories/fussballde.py`
 - **Description**: Web scraping feature for VfB Speldorf football teams
@@ -211,10 +254,10 @@
   - home_team, away_team (str)
   - result (str | None)
 
-#### 4. Handball Games Schedule
+#### 5. Handball Games Schedule
 - **Status**: ✅ Complete
 - **URL**: `/handball/`
-- **View**: `core.views.handball_games` (`core/views.py:21-41`)
+- **View**: `core.views.handball_games` (`core/views.py:50-52`)
 - **Template**: `core/templates/core/handball_games.html`
 - **Repository**: `family_intranet/repositories/handballnordrhein.py`
 - **Description**: Web scraping feature for DJK Saarn handball teams
@@ -239,10 +282,10 @@
   - spielbericht_genehmigt (bool | None)
   - spielfrei (bool | None)
 
-#### 5. Mülltermine (Trash Collection Schedule)
+#### 6. Mülltermine (Trash Collection Schedule)
 - **Status**: ✅ Complete
 - **URL**: `/muell/`
-- **View**: `core.views.muelltermine` (`core/views.py:73-81`)
+- **View**: `core.views.muelltermine` (`core/views.py:104-106`)
 - **Template**: `core/templates/core/muelltermine.html`
 - **Repository**: `family_intranet/repositories/mheg.py`
 - **Description**: Displays upcoming trash collection dates from MHEG waste management API
@@ -267,10 +310,10 @@
 - **API**: Uses MHEG waste management API with caching (15 minutes)
 - **Configuration Notes**: Address is hardcoded in mheg.py (str_name, str_hnr, fra_strase)
 
-#### 6. Vertretungsplan (School Substitution Schedule)
+#### 7. Vertretungsplan (School Substitution Schedule)
 - **Status**: ✅ Complete
 - **URL**: `/vertretungsplan/`
-- **View**: `core.views.vertretungsplan` (`core/views.py:87-115`)
+- **View**: `core.views.vertretungsplan` (`core/views.py:121-123`)
 - **Template**: `core/templates/core/vertretungsplan.html`
 - **Repository**: `family_intranet/repositories/gymbroich.py`
 - **Description**: Displays school substitution schedule for Mattis at Gymnasium Broich
@@ -297,14 +340,14 @@
   - MATTIS_CLASS_SUFFIX = "B"
   - Class is calculated dynamically based on current date
 
-#### 7. Pi-hole Control
+#### 8. Pi-hole Control
 - **Status**: ✅ Complete
 - **URLs**:
   - `/pihole/status/` (GET endpoint for current status)
   - `/pihole/disable/` (POST endpoint to disable blocking)
 - **Views**:
-  - `core.views.pihole_status` (`core/views.py:122-139`)
-  - `core.views.pihole_disable` (`core/views.py:142-162`)
+  - `core.views.pihole_status` (`core/views.py:162-179`)
+  - `core.views.pihole_disable` (`core/views.py:182-202`)
 - **Repository**: `family_intranet/repositories/pihole.py`
 - **Description**: Remote control for Pi-hole DNS blocking (disables blocking for 5 minutes)
 - **Features**:

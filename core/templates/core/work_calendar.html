@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+
+{% block title %}Arbeitskalender - Murkelhausen Family{% endblock %}
+
+{% block nav_work_calendar %}active{% endblock %}
+
+{% block extra_css %}
+<!-- HTMX -->
+<script src="https://unpkg.com/htmx.org@2.0.1"></script>
+
+<style>
+    .hero-section {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 3rem 0;
+    }
+    .appointment-card {
+        transition: transform 0.2s;
+        border-left: 4px solid #667eea;
+    }
+    .appointment-card:hover {
+        transform: translateY(-3px);
+    }
+    .badge-work {
+        background-color: #0d6efd;
+    }
+    .badge-whole-day {
+        background-color: #6c757d;
+    }
+    .badge-recurring {
+        background-color: #0dcaf0;
+        color: #000;
+    }
+    .date-header {
+        background-color: #f8f9fa;
+        border-left: 4px solid #667eea;
+        padding: 0.75rem 1rem;
+        margin-bottom: 1rem;
+        font-weight: bold;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+    <!-- Hero Section -->
+    <section class="hero-section">
+        <div class="container text-center">
+            <h1 class="display-4 mb-3">💼 Arbeitskalender</h1>
+            <p class="lead" id="days-text">Termine für die nächsten <span id="days-count">7</span> Tage</p>
+            <div class="d-flex justify-content-center gap-3 mt-3 flex-wrap">
+                <select class="form-select form-select-lg" id="days-select" style="max-width: 200px;">
+                    <option value="3">3 Tage</option>
+                    <option value="7" selected>7 Tage</option>
+                    <option value="14">14 Tage</option>
+                    <option value="30">30 Tage</option>
+                </select>
+            </div>
+        </div>
+    </section>
+
+    <!-- Main Content -->
+    <div class="container my-5" id="calendar-content"
+         hx-get="{% url 'work_calendar_data' %}?days=7"
+         hx-trigger="load"
+         hx-swap="innerHTML">
+        <!-- Loading Placeholder -->
+        <div class="text-center py-5">
+            <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-3 text-muted">Lade Termine...</p>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        // Handle days selection dropdown
+        function updateCalendarDays(days) {
+            // Update the text
+            document.getElementById('days-count').textContent = days;
+
+            // Use HTMX ajax to fetch new data with updated days parameter
+            const baseUrl = '{% url "work_calendar_data" %}';
+            const newUrl = baseUrl + '?days=' + days;
+
+            console.log('[Work Calendar] Fetching data for ' + days + ' days from: ' + newUrl);
+
+            htmx.ajax('GET', newUrl, {
+                target: '#calendar-content',
+                swap: 'innerHTML'
+            }).then(function() {
+                console.log('[Work Calendar] Data loaded successfully for ' + days + ' days');
+            }).catch(function(error) {
+                console.error('[Work Calendar] Error loading data:', error);
+            });
+        }
+
+        // Setup days dropdown
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('days-select').addEventListener('change', function() {
+                console.log('Days dropdown changed to:', this.value);
+                updateCalendarDays(this.value);
+            });
+        });
+    </script>
+{% endblock %}

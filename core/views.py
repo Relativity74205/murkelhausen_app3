@@ -38,9 +38,10 @@ from family_intranet.repositories.mheg import (
     get_muelltermine_for_home,
     get_wertstoffhof_oeffnungszeiten,
 )
+from family_intranet.repositories.outlook_calendar import fetch_work_calendar
 from family_intranet.repositories.owm import get_weather_data_muelheim
 from family_intranet.repositories.pihole import MultiPiHoleRepository
-from family_intranet.settings import GOOGLE_CALENDAR_SETTINGS
+from family_intranet.settings import GOOGLE_CALENDAR_SETTINGS, OUTLOOK_CALENDAR_URL
 
 
 def home(request):
@@ -589,3 +590,40 @@ def calendar_update(request):
             {"success": False, "error": f"Fehler beim Aktualisieren: {e!s}"},
             status=500,
         )
+
+
+def work_calendar(request):
+    """Work calendar view - initial page load."""
+    return render(request, "core/work_calendar.html")
+
+
+def work_calendar_data(request):
+    """Work calendar data - async loading for HTMX."""
+    logger = logging.getLogger(__name__)
+    try:
+        # Get number of days to show from query parameter, default to 7
+        days_to_show = int(request.GET.get("days", 7))
+        logger.info(f"Work calendar data requested for {days_to_show} days")
+
+        # Fetch work appointments from Outlook ICS calendar
+        appointments = fetch_work_calendar(
+            OUTLOOK_CALENDAR_URL, days_ahead=days_to_show
+        )
+
+        # Group appointments by date for better display
+        appointments_by_date = defaultdict(list)
+        for appointment in appointments:
+            appointments_by_date[appointment.start_date].append(appointment)
+
+        # Convert to sorted list of (date, appointments) tuples
+        grouped_appointments = sorted(appointments_by_date.items())
+
+        context = {
+            "grouped_appointments": grouped_appointments,
+            "days_to_show": days_to_show,
+        }
+        return render(request, "core/work_calendar_content.html", context)
+    except (ConnectionError, TimeoutError, ValueError) as e:
+        logger.error(f"Error fetching work calendar: {e}", exc_info=True)
+        context = {"error": str(e)}
+        return render(request, "core/work_calendar_content.html", context)
