@@ -11,8 +11,8 @@ TEAM_PORTRAIT_BASE_URL = (
 GRUPPE_BASE_URL = (
     "https://hnr-handball.liga.nu/cgi-bin/WebObjects/nuLigaHBDE.woa/wa/groupPage"
 )
-TEAM_D_JUGEND = "2107894"
-GRUPPE_D_JUGEND = "championship=RR+25%2F26&group=445589"
+TEAM_D_JUGEND = "2163159"  # alt
+GRUPPE_D_JUGEND = "championship=RR+25%2F26&group=445606"  # alt
 TEAM_ERSTE_HERREN = "2093179"
 GRUPPE_ERSTE_HERREN = "championship=HNR+25%2F26&group=424203"
 
