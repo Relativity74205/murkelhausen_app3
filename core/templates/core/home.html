@@ -157,6 +157,35 @@
             </div>
         </section>
 
+        <!-- Pushover Notification Section -->
+        <section class="py-4">
+            <div class="container">
+                <div class="row justify-content-center">
+                    <div class="col-md-6">
+                        <div class="card shadow-sm">
+                            <div class="card-body text-center p-4">
+                                <h5 class="card-title mb-3">🔔 Pushover</h5>
+                                <button
+                                    id="pushover-send-btn"
+                                    class="btn btn-primary"
+                                    hx-post="{% url 'pushover_send' %}"
+                                    hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+                                    hx-swap="none"
+                                    hx-indicator="#pushover-spinner"
+                                >
+                                    Test-Benachrichtigung senden
+                                </button>
+                                <div id="pushover-spinner" class="htmx-indicator spinner-border spinner-border-sm ms-2" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                                <div id="pushover-message" class="mt-3"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
         <!-- Pi-hole Control Section -->
         <section class="py-4 bg-light">
             <div class="container">
@@ -253,6 +282,22 @@
         document.addEventListener('DOMContentLoaded', fetchPiholeStatus);
 
         document.body.addEventListener('htmx:afterRequest', function(event) {
+            // Pushover response handler
+            if (event.detail.target.id === 'pushover-send-btn') {
+                const messageDiv = document.getElementById('pushover-message');
+                if (event.detail.successful) {
+                    const response = JSON.parse(event.detail.xhr.response);
+                    if (response.success) {
+                        messageDiv.innerHTML = '<div class="alert alert-success" role="alert">✅ ' + response.message + '</div>';
+                    } else {
+                        messageDiv.innerHTML = '<div class="alert alert-danger" role="alert">❌ Error: ' + response.error + '</div>';
+                    }
+                    setTimeout(() => { messageDiv.innerHTML = ''; }, 10000);
+                } else {
+                    messageDiv.innerHTML = '<div class="alert alert-danger" role="alert">❌ Failed to connect</div>';
+                }
+            }
+
             if (event.detail.target.id === 'pihole-disable-btn') {
                 const messageDiv = document.getElementById('pihole-message');
                 const timerDiv = document.getElementById('pihole-timer');

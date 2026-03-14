@@ -79,40 +79,40 @@ WSGI_APPLICATION = "family_intranet.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "HOST": "192.168.1.69",
-        "USER": os.environ.get("POSTGRES_USER"),
-        "DBNAME": os.environ.get("POSTGRES_DBNAME"),
-        "PORT": 5432,
-        "PASSWORD": os.environ.get("POSTGRES_PASSWORD"),
-        "TIME_ZONE": "Europe/Berlin",
-        "NAME": os.environ.get("POSTGRES_DBNAME"),
-    },
-    "report": {
-        "ENGINE": "django.db.backends.postgresql",
-        "HOST": "192.168.1.69",
-        "USER": os.environ.get("POSTGRES_USER"),
-        "DBNAME": "murkelhausen_datastore",
-        "OPTIONS": {"options": "-c search_path=report"},
-        "PORT": 5432,
-        "PASSWORD": os.environ.get("POSTGRES_PASSWORD"),
-        "TIME_ZONE": "Europe/Berlin",
-        "NAME": "murkelhausen_datastore",
-    },
-    "data": {
-        "ENGINE": "django.db.backends.postgresql",
-        "HOST": "192.168.1.69",
-        "USER": os.environ.get("POSTGRES_USER"),
-        "DBNAME": "murkelhausen_datastore",
-        "OPTIONS": {"options": "-c search_path=data"},
-        "PORT": 5432,
-        "PASSWORD": os.environ.get("POSTGRES_PASSWORD"),
-        "TIME_ZONE": "Europe/Berlin",
-        "NAME": "murkelhausen_datastore",
-    },
-}
+# DATABASES = {
+#     "default": {
+#         "ENGINE": "django.db.backends.postgresql",
+#         "HOST": "192.168.1.69",
+#         "USER": os.environ.get("POSTGRES_USER"),
+#         "DBNAME": os.environ.get("POSTGRES_DBNAME"),
+#         "PORT": 5432,
+#         "PASSWORD": os.environ.get("POSTGRES_PASSWORD"),
+#         "TIME_ZONE": "Europe/Berlin",
+#         "NAME": os.environ.get("POSTGRES_DBNAME"),
+#     },
+#     "report": {
+#         "ENGINE": "django.db.backends.postgresql",
+#         "HOST": "192.168.1.69",
+#         "USER": os.environ.get("POSTGRES_USER"),
+#         "DBNAME": "murkelhausen_datastore",
+#         "OPTIONS": {"options": "-c search_path=report"},
+#         "PORT": 5432,
+#         "PASSWORD": os.environ.get("POSTGRES_PASSWORD"),
+#         "TIME_ZONE": "Europe/Berlin",
+#         "NAME": "murkelhausen_datastore",
+#     },
+#     "data": {
+#         "ENGINE": "django.db.backends.postgresql",
+#         "HOST": "192.168.1.69",
+#         "USER": os.environ.get("POSTGRES_USER"),
+#         "DBNAME": "murkelhausen_datastore",
+#         "OPTIONS": {"options": "-c search_path=data"},
+#         "PORT": 5432,
+#         "PASSWORD": os.environ.get("POSTGRES_PASSWORD"),
+#         "TIME_ZONE": "Europe/Berlin",
+#         "NAME": "murkelhausen_datastore",
+#     },
+# }
 
 
 DATABASE_ROUTERS = ["murkelhausen_info.routers.MurkelhausenInfoRouter"]
@@ -164,6 +164,8 @@ PODCASTINDEX_API_SECRET = os.environ.get("PODCASTINDEX_API_SECRET")
 PIHOLE_PRIMARY_PASSWORD = os.environ.get("PIHOLE_PRIMARY_PASSWORD")
 PIHOLE_BACKUP_PASSWORD = os.environ.get("PIHOLE_BACKUP_PASSWORD")
 OPENWEATHERMAP_API_KEY = os.environ.get("OPENWEATHERMAP_API_KEY")
+PUSHOVER_API_TOKEN = os.environ.get("PUSHOVER_API_TOKEN")
+PUSHOVER_USER_KEY = os.environ.get("PUSHOVER_USER_KEY")
 
 # HTMX timeout in milliseconds (default: 30 seconds)
 HTMX_TIMEOUT = int(os.environ.get("HTMX_TIMEOUT", "10000"))

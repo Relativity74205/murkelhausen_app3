@@ -41,6 +41,7 @@ from family_intranet.repositories.mheg import (
 from family_intranet.repositories.outlook_calendar import fetch_work_calendar
 from family_intranet.repositories.owm import get_weather_data_muelheim
 from family_intranet.repositories.pihole import MultiPiHoleRepository
+from family_intranet.repositories.pushover import PushoverRepository
 from family_intranet.settings import GOOGLE_CALENDAR_SETTINGS, OUTLOOK_CALENDAR_URL
 
 
@@ -200,6 +201,20 @@ def pihole_disable(request):  # noqa: ARG001
         )
     except (ConnectionError, TimeoutError, ValueError) as e:
         logger.error(f"Pi-hole error: {e}", exc_info=True)
+        return JsonResponse({"success": False, "error": str(e)}, status=500)
+
+
+@require_POST
+def pushover_send(request):  # noqa: ARG001
+    """Send a Pushover test notification."""
+    logger = logging.getLogger(__name__)
+
+    try:
+        repo = PushoverRepository()
+        repo.send_notification("Test notification")
+        return JsonResponse({"success": True, "message": "Benachrichtigung gesendet"})
+    except (ConnectionError, TimeoutError, ValueError) as e:
+        logger.error(f"Pushover error: {e}", exc_info=True)
         return JsonResponse({"success": False, "error": str(e)}, status=500)
 
 
