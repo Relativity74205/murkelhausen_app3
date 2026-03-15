@@ -25,4 +25,5 @@ urlpatterns = [
     path("calendar/delete/", views.calendar_delete, name="calendar_delete"),
     path("work-calendar/", views.work_calendar, name="work_calendar"),
     path("work-calendar/data/", views.work_calendar_data, name="work_calendar_data"),
+    path("random-number/", views.random_number_data, name="random_number_data"),
 ]

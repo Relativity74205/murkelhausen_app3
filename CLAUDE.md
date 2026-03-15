@@ -70,6 +70,8 @@ core/                     # Main Django app
 
 **Parallel loading**: The calendar view uses `ThreadPoolExecutor` to fetch multiple Google calendars concurrently.
 
+**Scheduler**: `core/scheduler.py` runs a `BackgroundScheduler` with `DjangoJobStore` (persisted to PostgreSQL via `django-apscheduler`). Started in `core/apps.py::CoreConfig.ready()`, guarded to only run during `runserver` (not `migrate` or other management commands). Requires `django_apscheduler` in `INSTALLED_APPS` and a `migrate` run to create the `django_apscheduler_*` tables. Jobs visible in Django admin.
+
 ## Implemented Features & URLs
 
 | Feature | URLs |

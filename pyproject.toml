@@ -9,6 +9,7 @@ dependencies = [
     "beautifulsoup4>=4.14.0",
     "cachetools>=6.2.1",
     "django>=5.2.6,<6.0",
+#    "django-apscheduler>=0.7.0",
     "django-htmx>=1.25.0,<2.0",
     "gcsa>=2.6.0",
     "google-api-python-client>=2.185.0",
@@ -93,8 +94,8 @@ ignore = [
 
 # Allow specific violations in specific files
 [tool.ruff.lint.per-file-ignores]
-"settings.py" = ["E501", "F401", "F403"]
-"**/settings/*.py" = ["E501", "F401", "F403"]
+"settings.py" = ["E501", "F401", "F403", "ERA001"]
+"**/settings/*.py" = ["E501", "F401", "F403", "ERA001"]
 "manage.py" = ["T201", "PLC0415", "TRY003", "EM101"]
 "**/migrations/*.py" = ["E501", "RUF012"]
 "family_intranet/repositories/handballnordrhein.py" = ["DTZ007", "PLR2004"]

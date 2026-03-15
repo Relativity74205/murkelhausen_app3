@@ -157,6 +157,29 @@
             </div>
         </section>
 
+        <!-- Scheduler Demo Section -->
+        <section class="py-4">
+            <div class="container">
+                <div class="row justify-content-center">
+                    <div class="col-md-6">
+                        <div class="card shadow-sm">
+                            <div class="card-body text-center p-4">
+                                <h5 class="card-title mb-3">🔢 Zufallszahl</h5>
+                                <p class="card-text text-muted">Aktualisiert alle 10 Sekunden (APScheduler)</p>
+                                <p class="display-6 fw-bold"
+                                           id="random-number-value"
+                                           hx-get="{% url 'random_number_data' %}"
+                                           hx-trigger="every 10s"
+                                           hx-swap="innerHTML">
+                                    {% if random_number %}{{ random_number }}{% else %}—{% endif %}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
         <!-- Pushover Notification Section -->
         <section class="py-4">
             <div class="container">

@@ -9,6 +9,7 @@ from django.shortcuts import render
 from django.views.decorators.http import require_POST
 from gcsa.event import Event
 
+from core.scheduler import RANDOM_NUMBER_FILE
 from family_intranet.repositories.fussballde import (
     get_e2_junioren_home_url,
     get_erik_e2_junioren_next_games,
@@ -46,7 +47,21 @@ from family_intranet.settings import GOOGLE_CALENDAR_SETTINGS, OUTLOOK_CALENDAR_
 
 
 def home(request):
-    return render(request, "core/home.html")
+    try:
+        random_number = RANDOM_NUMBER_FILE.read_text().strip()
+    except FileNotFoundError:
+        random_number = None
+    return render(request, "core/home.html", {"random_number": random_number})
+
+
+def random_number_data(request):
+    try:
+        random_number = RANDOM_NUMBER_FILE.read_text().strip()
+    except FileNotFoundError:
+        random_number = None
+    return render(
+        request, "core/random_number_content.html", {"random_number": random_number}
+    )
 
 
 def handball_games(request):

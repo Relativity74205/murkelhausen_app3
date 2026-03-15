@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "django_htmx",
+    "django_apscheduler",
     "core",
 ]
 
@@ -79,43 +80,16 @@ WSGI_APPLICATION = "family_intranet.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-# DATABASES = {
-#     "default": {
-#         "ENGINE": "django.db.backends.postgresql",
-#         "HOST": "192.168.1.69",
-#         "USER": os.environ.get("POSTGRES_USER"),
-#         "DBNAME": os.environ.get("POSTGRES_DBNAME"),
-#         "PORT": 5432,
-#         "PASSWORD": os.environ.get("POSTGRES_PASSWORD"),
-#         "TIME_ZONE": "Europe/Berlin",
-#         "NAME": os.environ.get("POSTGRES_DBNAME"),
-#     },
-#     "report": {
-#         "ENGINE": "django.db.backends.postgresql",
-#         "HOST": "192.168.1.69",
-#         "USER": os.environ.get("POSTGRES_USER"),
-#         "DBNAME": "murkelhausen_datastore",
-#         "OPTIONS": {"options": "-c search_path=report"},
-#         "PORT": 5432,
-#         "PASSWORD": os.environ.get("POSTGRES_PASSWORD"),
-#         "TIME_ZONE": "Europe/Berlin",
-#         "NAME": "murkelhausen_datastore",
-#     },
-#     "data": {
-#         "ENGINE": "django.db.backends.postgresql",
-#         "HOST": "192.168.1.69",
-#         "USER": os.environ.get("POSTGRES_USER"),
-#         "DBNAME": "murkelhausen_datastore",
-#         "OPTIONS": {"options": "-c search_path=data"},
-#         "PORT": 5432,
-#         "PASSWORD": os.environ.get("POSTGRES_PASSWORD"),
-#         "TIME_ZONE": "Europe/Berlin",
-#         "NAME": "murkelhausen_datastore",
-#     },
-# }
-
-
-DATABASE_ROUTERS = ["murkelhausen_info.routers.MurkelhausenInfoRouter"]
+DATABASES = {
+    "default": {
+        "ENGINE": "django.db.backends.postgresql",
+        "HOST": "192.168.1.69",
+        "PORT": int(os.environ.get("POSTGRES_PORT", "5432")),
+        "USER": os.environ.get("POSTGRES_USER"),
+        "PASSWORD": os.environ.get("POSTGRES_PASSWORD"),
+        "NAME": os.environ.get("POSTGRES_DBNAME"),
+    }
+}
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
