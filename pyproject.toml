@@ -9,7 +9,7 @@ dependencies = [
     "beautifulsoup4>=4.14.0",
     "cachetools>=6.2.1",
     "django>=5.2.6,<6.0",
-#    "django-apscheduler>=0.7.0",
+    "django-apscheduler>=0.7.0",
     "django-htmx>=1.25.0,<2.0",
     "gcsa>=2.6.0",
     "google-api-python-client>=2.185.0",
@@ -19,6 +19,10 @@ dependencies = [
     "python-dateutil>=2.9.0.post0",
     "pytz>=2025.2",
     "requests>=2.32.5,<3.0",
+    "garminconnect>=0.2.25",
+    "garth>=0.4.46",
+    "sqlalchemy>=2.0",
+    "apscheduler>=3.10,<4.0",
 ]
 
 [dependency-groups]
@@ -109,6 +113,7 @@ ignore = [
 "family_intranet/repositories/owm_functions.py" = ["PLR0911", "PLR2004"]
 "family_intranet/repositories/owm_models.py" = ["DTZ006", "DTZ012", "E501"]
 "core/views.py" = ["DTZ007", "PLR0911"]
+"family_intranet/jobs/garmin/*.py" = ["DTZ005", "DTZ007", "DTZ011", "N815", "E501"]
 ".github/**/*.py" = ["ALL"]
 
 [tool.ruff.lint.isort]
@@ -148,4 +153,5 @@ exclude = [
     "family_intranet/repositories/owm_functions.py",
     "family_intranet/repositories/owm_models.py",
     "family_intranet/repositories/google_calendar.py",
+    "family_intranet/jobs/garmin/*.py",
 ]

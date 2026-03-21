@@ -141,6 +141,19 @@ OPENWEATHERMAP_API_KEY = os.environ.get("OPENWEATHERMAP_API_KEY")
 PUSHOVER_API_TOKEN = os.environ.get("PUSHOVER_API_TOKEN")
 PUSHOVER_USER_KEY = os.environ.get("PUSHOVER_USER_KEY")
 
+# Garmin Connect
+GARMIN_EMAIL = os.environ.get("GARMIN_EMAIL")
+GARMIN_PASSWORD = os.environ.get("GARMIN_PASSWORD")
+GARMIN_AUTH_TOKEN_PATH = os.environ.get("GARMIN_AUTH_TOKEN_PATH", "~/.garth")
+
+# Garmin datastore DB (SQLAlchemy connection — falls back to Django POSTGRES_* vars)
+GARMIN_DB_HOST = os.environ.get("GARMIN_DB_HOST")
+GARMIN_DB_PORT = int(os.environ.get("GARMIN_DB_PORT"))
+GARMIN_DB_USER = os.environ.get("GARMIN_DB_USER")
+GARMIN_DB_PASSWORD = os.environ.get("GARMIN_DB_PASSWORD")
+GARMIN_DB_NAME = os.environ.get("GARMIN_DB_NAME")
+GARMIN_DB_SCHEMA = os.environ.get("GARMIN_DB_SCHEMA", "data")
+
 # HTMX timeout in milliseconds (default: 30 seconds)
 HTMX_TIMEOUT = int(os.environ.get("HTMX_TIMEOUT", "10000"))
 

@@ -1,19 +1,11 @@
 """APScheduler background task scheduler."""
 
-import random
-from pathlib import Path
-
 from apscheduler.schedulers.background import BackgroundScheduler
 from django_apscheduler.jobstores import DjangoJobStore
 
-RANDOM_NUMBER_FILE = Path(__file__).parent / "random_number.txt"
+from family_intranet.jobs.garmin.runner import run_garmin_load
 
 _scheduler: BackgroundScheduler | None = None
-
-
-def _write_random_number() -> None:
-    number = random.randint(1, 1_000_000)
-    RANDOM_NUMBER_FILE.write_text(str(number))
 
 
 def start() -> None:
@@ -22,12 +14,12 @@ def start() -> None:
         return
     _scheduler = BackgroundScheduler()
     _scheduler.add_jobstore(DjangoJobStore(), "default")
+    _scheduler.remove_all_jobs()
     _scheduler.add_job(
-        _write_random_number,
-        "interval",
-        seconds=10,
-        id="random_number",
+        run_garmin_load,
+        "cron",
+        minute=0,
+        id="garmin_load",
         replace_existing=True,
     )
-    _write_random_number()  # write immediately on startup
     _scheduler.start()

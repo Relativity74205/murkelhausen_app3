@@ -47,6 +47,14 @@ family_intranet/          # Django project package
     owm.py                # OpenWeatherMap API (one-call + current weather)
     owm_models.py         # Pydantic models for OWM responses
     owm_functions.py      # OWM data processing helpers
+  jobs/                   # Scheduled background jobs
+    garmin/               # Garmin Connect data loader (hourly via APScheduler)
+      db.py               # SQLAlchemy engine + save_objects (murkelhausen_datastore DB)
+      models.py           # SQLAlchemy models for Garmin data + GarminLoadRun tracker
+      auth.py             # garth-based Garmin authentication
+      client.py           # get_garmin_client() → garminconnect.Garmin
+      loaders.py          # get_*_data() functions (heartrate, steps, floors, stress, etc.)
+      runner.py           # run_garmin_load() — main scheduled entry point
 core/                     # Main Django app
   views.py                # All views
   urls.py                 # App URL config
@@ -86,6 +94,7 @@ core/                     # Main Django app
 | Pi-hole control | `/pihole/status/`, `/pihole/disable/` |
 | Weather (OpenWeatherMap) | `/weather/` |
 | Pushover notifications | `/pushover/send/` |
+| Garmin data load (scheduled) | Hourly APScheduler job — no URL, runs in background |
 
 ## Configuration (Environment Variables)
 
@@ -107,6 +116,12 @@ OWM_API_KEY  # (check settings.py for exact name)
 
 # Pushover
 PUSHOVER_API_TOKEN, PUSHOVER_USER_KEY
+
+# Garmin Connect
+GARMIN_EMAIL, GARMIN_PASSWORD
+GARMIN_AUTH_TOKEN_PATH  # default ~/.garth
+GARMIN_DB_HOST, GARMIN_DB_PORT, GARMIN_DB_USER, GARMIN_DB_PASSWORD
+GARMIN_DB_NAME, GARMIN_DB_SCHEMA  # murkelhausen_datastore / data
 
 # App
 HTMX_TIMEOUT  # milliseconds, default 30000
