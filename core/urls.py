@@ -25,4 +25,7 @@ urlpatterns = [
     path("calendar/delete/", views.calendar_delete, name="calendar_delete"),
     path("work-calendar/", views.work_calendar, name="work_calendar"),
     path("work-calendar/data/", views.work_calendar_data, name="work_calendar_data"),
+    path("tasks/", views.tasks, name="tasks"),
+    path("tasks/data/", views.tasks_data, name="tasks_data"),
+    path("tasks/<str:job_id>/enqueue/", views.tasks_enqueue, name="tasks_enqueue"),
 ]

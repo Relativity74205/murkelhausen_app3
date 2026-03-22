@@ -98,6 +98,7 @@ core/                     # Main Django app
 | Weather (OpenWeatherMap) | `/weather/` |
 | Pushover notifications | `/pushover/send/` |
 | Garmin data load (scheduled) | Hourly APScheduler → django-tasks-db — no URL, runs in worker |
+| Tasks overview | `/tasks/`, `/tasks/data/`, `/tasks/<job_id>/enqueue/` |
 
 ## Configuration (Environment Variables)
 

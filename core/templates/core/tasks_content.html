@@ -1,0 +1,144 @@
+{% load tz %}
+
+<!-- Scheduled Jobs (APScheduler) -->
+<section class="mb-5">
+    <h4 class="mb-3">📅 Geplante Jobs</h4>
+
+    {% if jobs %}
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead class="table-dark">
+                <tr>
+                    <th>Job</th>
+                    <th>Nächste Ausführung</th>
+                    <th>Letzter Status</th>
+                    <th>Letzte Ausführung</th>
+                    <th>Aktion</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for entry in jobs %}
+                <tr>
+                    <td><code>{{ entry.job.id }}</code></td>
+                    <td>
+                        {% if entry.job.next_run_time %}
+                            {{ entry.job.next_run_time|localtime|date:"d.m.Y H:i" }}
+                        {% else %}
+                            <span class="text-muted">—</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if entry.last_execution %}
+                            {% if entry.last_execution.status == "Executed" %}
+                                <span class="badge bg-success">✅ Ausgeführt</span>
+                            {% elif entry.last_execution.status == "Error" %}
+                                <span class="badge bg-danger">❌ Fehler</span>
+                            {% elif entry.last_execution.status == "Missed" %}
+                                <span class="badge bg-warning text-dark">⚠️ Verpasst</span>
+                            {% else %}
+                                <span class="badge bg-secondary">{{ entry.last_execution.status }}</span>
+                            {% endif %}
+                        {% else %}
+                            <span class="text-muted">—</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if entry.last_execution %}
+                            {{ entry.last_execution.run_time|localtime|date:"d.m.Y H:i" }}
+                        {% else %}
+                            <span class="text-muted">—</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <button
+                            class="btn btn-sm btn-primary"
+                            hx-post="{% url 'tasks_enqueue' entry.job.id %}"
+                            hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+                            hx-swap="none"
+                            hx-indicator="#spinner-{{ entry.job.id }}"
+                        >
+                            Jetzt starten
+                        </button>
+                        <span id="spinner-{{ entry.job.id }}" class="htmx-indicator spinner-border spinner-border-sm ms-1" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </span>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="alert alert-info">Keine geplanten Jobs gefunden.</div>
+    {% endif %}
+</section>
+
+<!-- Recent Task Executions (django-tasks-db) -->
+<section>
+    <h4 class="mb-3">🕐 Letzte Ausführungen</h4>
+
+    {% if recent_results %}
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead class="table-dark">
+                <tr>
+                    <th>Task</th>
+                    <th>Status</th>
+                    <th>Eingereiht</th>
+                    <th>Gestartet</th>
+                    <th>Dauer</th>
+                    <th>Fehler</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for result in recent_results %}
+                <tr>
+                    <td><code>{{ result.task_name }}</code></td>
+                    <td>
+                        {% if result.status == "SUCCESSFUL" %}
+                            <span class="badge bg-success">✅ Erfolgreich</span>
+                        {% elif result.status == "FAILED" %}
+                            <span class="badge bg-danger">❌ Fehlgeschlagen</span>
+                        {% elif result.status == "RUNNING" %}
+                            <span class="badge bg-primary">🔄 Läuft</span>
+                        {% elif result.status == "READY" %}
+                            <span class="badge bg-warning text-dark">⏳ Wartet</span>
+                        {% else %}
+                            <span class="badge bg-secondary">{{ result.status }}</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ result.enqueued_at|localtime|date:"d.m.Y H:i:s" }}</td>
+                    <td>
+                        {% if result.started_at %}
+                            {{ result.started_at|localtime|date:"d.m.Y H:i:s" }}
+                        {% else %}
+                            <span class="text-muted">—</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if result.started_at and result.finished_at %}
+                            {% with duration=result.finished_at|timeuntil:result.started_at %}
+                                {{ duration }}
+                            {% endwith %}
+                        {% else %}
+                            <span class="text-muted">—</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if result.status == "FAILED" and result.exception_class_path %}
+                            <span class="text-danger small" title="{{ result.traceback }}">
+                                {{ result.exception_class_path|slice:":60" }}
+                            </span>
+                        {% else %}
+                            <span class="text-muted">—</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="alert alert-info">Noch keine Ausführungen vorhanden.</div>
+    {% endif %}
+</section>

@@ -607,6 +607,51 @@ def calendar_update(request):
         )
 
 
+def tasks(request):
+    """Tasks page - shows scheduled jobs and recent task executions."""
+    return render(request, "core/tasks.html")
+
+
+def tasks_data(request):
+    """Tasks data - async loading for HTMX."""
+    from django_apscheduler.models import DjangoJob, DjangoJobExecution  # noqa: PLC0415
+    from django_tasks_db.models import DBTaskResult  # noqa: PLC0415
+
+    jobs = []
+    for job in DjangoJob.objects.all().order_by("id"):  # type: ignore[union-attr]
+        last_exec = (
+            DjangoJobExecution.objects.filter(job=job)  # type: ignore[union-attr]
+            .order_by("-run_time")
+            .first()
+        )
+        jobs.append({"job": job, "last_execution": last_exec})
+
+    recent_results = DBTaskResult.objects.order_by("-enqueued_at")[:20]
+
+    return render(
+        request,
+        "core/tasks_content.html",
+        {"jobs": jobs, "recent_results": recent_results},
+    )
+
+
+@require_POST
+def tasks_enqueue(request, job_id: str):  # noqa: ARG001
+    """Enqueue a scheduled job immediately."""
+    from family_intranet.jobs.garmin.runner import run_garmin_load  # noqa: PLC0415
+
+    enqueue_map = {
+        "garmin_load": run_garmin_load,
+    }
+    task_fn = enqueue_map.get(job_id)
+    if task_fn is None:
+        return JsonResponse(
+            {"success": False, "error": f"Unbekannter Job: {job_id}"}, status=404
+        )
+    result = task_fn.enqueue()
+    return JsonResponse({"success": True, "task_id": str(result.id)})
+
+
 def work_calendar(request):
     """Work calendar view - initial page load."""
     return render(request, "core/work_calendar.html")
