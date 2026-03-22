@@ -7,7 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 Personal intranet website for the family. Django backend with server-side templates, HTMX for dynamic updates, and Bootstrap for styling.
 
 ## Stack
-- **Backend**: Django 5.2, Python 3.13
+- **Backend**: Django 6.0, Python 3.13
 - **Frontend**: Django templates + HTMX + Bootstrap 5.3
 - **Database**: PostgreSQL (via psycopg3)
 - **Package Manager**: uv
@@ -48,7 +48,7 @@ family_intranet/          # Django project package
     owm_models.py         # Pydantic models for OWM responses
     owm_functions.py      # OWM data processing helpers
   jobs/                   # Scheduled background jobs
-    garmin/               # Garmin Connect data loader (hourly via APScheduler)
+    garmin/               # Garmin Connect data loader (hourly, enqueued via APScheduler → django-tasks-db)
       db.py               # SQLAlchemy engine + save_objects (murkelhausen_datastore DB)
       models.py           # SQLAlchemy models for Garmin data + GarminLoadRun tracker
       auth.py             # garth-based Garmin authentication
@@ -78,7 +78,10 @@ core/                     # Main Django app
 
 **Parallel loading**: The calendar view uses `ThreadPoolExecutor` to fetch multiple Google calendars concurrently.
 
-**Scheduler**: `core/scheduler.py` runs a `BackgroundScheduler` with `DjangoJobStore` (persisted to PostgreSQL via `django-apscheduler`). Started in `core/apps.py::CoreConfig.ready()`, guarded to only run during `runserver` (not `migrate` or other management commands). Requires `django_apscheduler` in `INSTALLED_APPS` and a `migrate` run to create the `django_apscheduler_*` tables. Jobs visible in Django admin.
+**Scheduler + Task Queue (hybrid)**: Two-layer architecture:
+- `core/scheduler.py`: APScheduler `BackgroundScheduler` with `DjangoJobStore` (PostgreSQL via `django-apscheduler`). Started in `core/apps.py::CoreConfig.ready()`, only during `runserver`. Calls `.enqueue()` on tasks — does NOT execute them directly. Job schedule/history visible in Django admin.
+- `django-tasks-db` (`django.tasks`): Official Django task queue (Django 6.0 stable API). Tasks decorated with `@task`, enqueued via `.enqueue()`, executed by a separate `db_worker` process. Results visible in Django admin. Worker started via `python manage.py db_worker`.
+- Manual trigger: `python manage.py enqueue_garmin_load`
 
 ## Implemented Features & URLs
 
@@ -94,7 +97,7 @@ core/                     # Main Django app
 | Pi-hole control | `/pihole/status/`, `/pihole/disable/` |
 | Weather (OpenWeatherMap) | `/weather/` |
 | Pushover notifications | `/pushover/send/` |
-| Garmin data load (scheduled) | Hourly APScheduler job — no URL, runs in background |
+| Garmin data load (scheduled) | Hourly APScheduler → django-tasks-db — no URL, runs in worker |
 
 ## Configuration (Environment Variables)
 

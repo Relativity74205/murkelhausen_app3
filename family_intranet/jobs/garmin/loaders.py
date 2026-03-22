@@ -79,7 +79,9 @@ def get_steps_data(*, measure_date: date, garmin_client: Garmin) -> int:
 def get_daily_steps_data(*, measure_date: date, garmin_client: Garmin) -> int:
     """Returns the amount of daily steps data points saved."""
     logger.info("Getting daily steps data for %s.", measure_date)
-    data = garmin_client.get_daily_steps(start=measure_date.isoformat(), end=measure_date.isoformat())
+    data = garmin_client.get_daily_steps(
+        start=measure_date.isoformat(), end=measure_date.isoformat()
+    )
     steps = tuple(
         models.StepsDaily(
             calendar_date=date.fromisoformat(entry["calendarDate"]),

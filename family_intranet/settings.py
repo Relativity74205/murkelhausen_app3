@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "django_htmx",
     "django_apscheduler",
+    "django_tasks_db",
     "core",
 ]
 
@@ -131,6 +132,13 @@ STATIC_URL = "static/"
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+TASKS = {
+    "default": {
+        "BACKEND": "django_tasks_db.DatabaseBackend",
+        "QUEUES": ["default"],
+    }
+}
 
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
 PODCASTINDEX_API_KEY = "XMU8WGRYU7PPGSMQ9TQT"

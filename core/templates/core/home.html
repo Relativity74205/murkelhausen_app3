@@ -265,16 +265,19 @@
             fetch("{% url 'pihole_status' %}")
                 .then(response => response.json())
                 .then(data => {
-                    console.log('Pi-hole status:', data);
-                    if (data.success && !data.blocking && data.timer && data.timer > 0) {
-                        console.log('Starting countdown with', data.timer, 'seconds');
+                    if (!data.success) {
+                        document.getElementById('pihole-message').innerHTML =
+                            '<div class="alert alert-warning" role="alert">⚠️ Pi-hole nicht erreichbar</div>';
+                        return;
+                    }
+                    if (!data.blocking && data.timer && data.timer > 0) {
                         startCountdown(data.timer);
-                    } else {
-                        console.log('Not starting countdown. blocking:', data.blocking, 'timer:', data.timer);
                     }
                 })
                 .catch(error => {
                     console.error('Failed to fetch Pi-hole status:', error);
+                    document.getElementById('pihole-message').innerHTML =
+                        '<div class="alert alert-warning" role="alert">⚠️ Pi-hole nicht erreichbar</div>';
                 });
         }
 

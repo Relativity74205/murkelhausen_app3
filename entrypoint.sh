@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+set -e
 
 uv run python manage.py migrate
+uv run python manage.py db_worker --no-reload &
 uv run python manage.py runserver 0.0.0.0:8000

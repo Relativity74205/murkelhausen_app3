@@ -3,7 +3,7 @@ import traceback
 from datetime import UTC, date, datetime
 
 from dateutil.relativedelta import relativedelta
-from sqlalchemy import func
+from django.tasks import task
 from sqlalchemy.orm import Session
 
 from family_intranet.jobs.garmin import client, db, loaders, models
@@ -31,7 +31,8 @@ def _get_last_successful_run_date() -> date:
     return date(2026, 2, 24)
 
 
-def run_garmin_load():
+@task
+def run_garmin_load() -> None:
     """Hourly scheduled job: loads all Garmin data since last successful run."""
     started_at = datetime.now(tz=UTC)
 

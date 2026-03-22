@@ -8,6 +8,10 @@ from family_intranet.jobs.garmin.runner import run_garmin_load
 _scheduler: BackgroundScheduler | None = None
 
 
+def _enqueue_garmin_load() -> None:
+    run_garmin_load.enqueue()
+
+
 def start() -> None:
     global _scheduler  # noqa: PLW0603
     if _scheduler is not None:
@@ -16,7 +20,7 @@ def start() -> None:
     _scheduler.add_jobstore(DjangoJobStore(), "default")
     _scheduler.remove_all_jobs()
     _scheduler.add_job(
-        run_garmin_load,
+        _enqueue_garmin_load,
         "cron",
         minute=0,
         id="garmin_load",
