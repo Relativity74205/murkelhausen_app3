@@ -1,27 +1,32 @@
-"""db_worker subprocess manager."""
+"""Worker health check via heartbeat tasks in the shared database."""
 
-import atexit
-import subprocess
-import sys
+from datetime import timedelta
 
-_proc: subprocess.Popen | None = None  # type: ignore[type-arg]
+from django.utils import timezone
 
-
-def start() -> None:
-    global _proc  # noqa: PLW0603
-    if _proc is not None:
-        return
-    _proc = subprocess.Popen(  # noqa: S603
-        [sys.executable, "manage.py", "db_worker", "--no-reload", "--no-startup-delay"],
-    )
-    atexit.register(_proc.terminate)
+from family_intranet.jobs.heartbeat import HEARTBEAT_TASK_PATH
 
 
 def get_status() -> dict:  # type: ignore[type-arg]
-    """Return worker process status as a dict for template rendering."""
-    if _proc is None:
-        return {"state": "not_started"}
-    code = _proc.poll()
-    if code is None:
-        return {"state": "running", "pid": _proc.pid}
-    return {"state": "stopped", "exit_code": code}
+    """Check worker health by looking for recent successful heartbeat tasks."""
+    from django_tasks_db.models import DBTaskResult  # noqa: PLC0415
+
+    cutoff = timezone.now() - timedelta(minutes=5)
+
+    last_heartbeat = (
+        DBTaskResult.objects.filter(task_path=HEARTBEAT_TASK_PATH, status="SUCCESSFUL")
+        .order_by("-finished_at")
+        .first()
+    )
+
+    if (
+        last_heartbeat
+        and last_heartbeat.finished_at
+        and last_heartbeat.finished_at >= cutoff
+    ):
+        return {"state": "healthy", "last_seen": last_heartbeat.finished_at}
+
+    if last_heartbeat:
+        return {"state": "unhealthy", "last_seen": last_heartbeat.finished_at}
+
+    return {"state": "unknown"}

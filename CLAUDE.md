@@ -80,7 +80,8 @@ core/                     # Main Django app
 
 **Scheduler + Task Queue (hybrid)**: Two-layer architecture:
 - `core/scheduler.py`: APScheduler `BackgroundScheduler` with `DjangoJobStore` (PostgreSQL via `django-apscheduler`). Started in `core/apps.py::CoreConfig.ready()`, only during `runserver`. Calls `.enqueue()` on tasks — does NOT execute them directly. Job schedule/history visible in Django admin.
-- `django-tasks-db` (`django.tasks`): Official Django task queue (Django 6.0 stable API). Tasks decorated with `@task`, enqueued via `.enqueue()`, executed by a separate `db_worker` process. Results visible in Django admin. Worker started via `python manage.py db_worker`.
+- `django-tasks-db` (`django.tasks`): Official Django task queue (Django 6.0 stable API). Tasks decorated with `@task`, enqueued via `.enqueue()`, executed by a separate `db_worker` process (runs in its own Docker container). Results visible in Django admin. Worker started via `python manage.py db_worker`.
+- **Worker health**: APScheduler enqueues a heartbeat task every 2 min. `core/worker.py::get_status()` checks the DB for recent successful heartbeats to determine if the worker container is alive. Shown on `/tasks/` page.
 - Manual trigger: `python manage.py enqueue_garmin_load`
 
 ## Implemented Features & URLs

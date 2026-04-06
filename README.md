@@ -1,5 +1,30 @@
 # Murkelhausen App V3
 
+## Background Tasks
+
+Two-container architecture for scheduled and user-triggered background jobs.
+
+**Components:**
+- **APScheduler** (in Django server) — schedules jobs (hourly Garmin load, 2-min heartbeat) and enqueues them via `django.tasks`
+- **django-tasks-db** (separate worker container) — executes enqueued tasks, stores results in PostgreSQL
+- **Tasks page** (`/tasks/`) — shows scheduled jobs, recent task results, worker health, and manual "Jetzt starten" button
+
+**Worker health monitoring:** APScheduler enqueues a lightweight heartbeat task every 2 minutes. The Django server checks the DB for recent successful heartbeats to determine if the worker is alive.
+
+**Local development:**
+```bash
+# Terminal 1: Django server (includes APScheduler)
+uv run python manage.py runserver
+
+# Terminal 2: Task worker
+uv run python manage.py db_worker
+
+# Manual trigger:
+uv run python manage.py enqueue_garmin_load
+```
+
+**Docker:** Two services in `docker-compose.yml` — `murkel3` (server) and `murkel3-worker` (worker), sharing the same PostgreSQL database.
+
 ## TODO
 
 - [x] add an icon to the app

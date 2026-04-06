@@ -618,6 +618,7 @@ def tasks_data(request):
     from django_tasks_db.models import DBTaskResult  # noqa: PLC0415
 
     from core import worker  # noqa: PLC0415
+    from family_intranet.jobs.heartbeat import HEARTBEAT_TASK_PATH  # noqa: PLC0415
 
     jobs = []
     for job in DjangoJob.objects.all().order_by("id"):  # type: ignore[union-attr]
@@ -628,7 +629,9 @@ def tasks_data(request):
         )
         jobs.append({"job": job, "last_execution": last_exec})
 
-    recent_results = DBTaskResult.objects.order_by("-enqueued_at")[:20]
+    recent_results = DBTaskResult.objects.exclude(
+        task_path=HEARTBEAT_TASK_PATH
+    ).order_by("-enqueued_at")[:20]
 
     return render(
         request,

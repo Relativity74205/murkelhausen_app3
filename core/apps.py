@@ -19,7 +19,6 @@ class CoreConfig(AppConfig):
         if is_runserver and os.environ.get("RUN_MAIN") != "true":
             return
 
-        from core import scheduler, worker  # noqa: PLC0415
+        from core import scheduler  # noqa: PLC0415
 
         scheduler.start()
-        worker.start()

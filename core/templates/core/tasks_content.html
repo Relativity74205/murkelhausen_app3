@@ -3,12 +3,15 @@
 <!-- Worker Health -->
 <div class="mb-4">
     <h4 class="mb-3">🖥️ Worker</h4>
-    {% if worker_status.state == "running" %}
-        <span class="badge bg-success fs-6">🟢 Läuft (PID {{ worker_status.pid }})</span>
-    {% elif worker_status.state == "stopped" %}
-        <span class="badge bg-danger fs-6">🔴 Gestoppt (Exit-Code: {{ worker_status.exit_code }})</span>
+    {% if worker_status.state == "healthy" %}
+        <span class="badge bg-success fs-6">🟢 Läuft</span>
+        <small class="text-muted ms-2">Letzter Heartbeat: {{ worker_status.last_seen|localtime|date:"d.m.Y H:i:s" }}</small>
+    {% elif worker_status.state == "unhealthy" %}
+        <span class="badge bg-danger fs-6">🔴 Nicht erreichbar</span>
+        <small class="text-muted ms-2">Letzter Heartbeat: {{ worker_status.last_seen|localtime|date:"d.m.Y H:i:s" }}</small>
     {% else %}
-        <span class="badge bg-secondary fs-6">⚪ Nicht gestartet</span>
+        <span class="badge bg-secondary fs-6">⚪ Unbekannt</span>
+        <small class="text-muted ms-2">Kein Heartbeat empfangen</small>
     {% endif %}
 </div>
 
