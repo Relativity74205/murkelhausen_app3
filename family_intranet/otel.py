@@ -13,8 +13,11 @@ from opentelemetry.sdk.resources import SERVICE_NAME, Resource
 
 logger = logging.getLogger(__name__)
 
-service_name: str = os.environ["OTEL_SERVICE_NAME"]
-METRIC_PREFIX = service_name
+_DEFAULT_SERVICE_NAME = "murkelhausen_app3"
+_DEFAULT_ENDPOINT = "http://192.168.1.69:4317"
+
+# Safe default — no KeyError if env var is absent at import time
+METRIC_PREFIX = os.environ.get("OTEL_SERVICE_NAME", _DEFAULT_SERVICE_NAME)
 
 _repository_duration: metrics.Histogram | None = None
 
@@ -22,9 +25,15 @@ _repository_duration: metrics.Histogram | None = None
 def setup_otel(*, instrument_django: bool = True) -> None:
     """Initialize OTEL MeterProvider. Call once at process startup."""
     global _repository_duration  # noqa: PLW0603
+
+    if os.environ.get("OTEL_ENABLED", "false").lower() != "true":
+        logger.info("OTEL disabled (OTEL_ENABLED != true)")
+        return
+
     logger.info("Initializing OTEL")
 
-    endpoint = os.environ["OTEL_EXPORTER_OTLP_ENDPOINT"]
+    service_name = os.environ.get("OTEL_SERVICE_NAME", _DEFAULT_SERVICE_NAME)
+    endpoint = os.environ.get("OTEL_EXPORTER_OTLP_ENDPOINT", _DEFAULT_ENDPOINT)
 
     resource = Resource(attributes={SERVICE_NAME: service_name})
     exporter = OTLPMetricExporter(endpoint=endpoint, insecure=True)
@@ -32,7 +41,7 @@ def setup_otel(*, instrument_django: bool = True) -> None:
     provider = MeterProvider(resource=resource, metric_readers=[reader])
     metrics.set_meter_provider(provider)
 
-    logger.info("OTEL initialized")
+    logger.info("OTEL initialized (service=%s endpoint=%s)", service_name, endpoint)
 
     _repository_duration = get_meter("repository").create_histogram(
         f"{METRIC_PREFIX}.repository.call.duration",
