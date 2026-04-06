@@ -653,7 +653,15 @@ def tasks_data(request):
     qs = DBTaskResult.objects.all()
     if hide_heartbeat:
         qs = qs.exclude(task_path=HEARTBEAT_TASK_PATH)
-    recent_results = qs.order_by("-enqueued_at")[:20]
+    recent_results = list(qs.order_by("-enqueued_at")[:20])
+    for result in recent_results:
+        if result.started_at and result.finished_at:
+            secs = int((result.finished_at - result.started_at).total_seconds())
+            result.duration_seconds = (  # type: ignore[attr-defined]
+                f"{secs // 60}m {secs % 60}s" if secs >= 60 else f"{secs}s"  # noqa: PLR2004
+            )
+        else:
+            result.duration_seconds = None  # type: ignore[attr-defined]
 
     return render(
         request,

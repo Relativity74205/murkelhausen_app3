@@ -90,7 +90,18 @@
 
 <!-- Recent Task Executions (django-tasks-db) -->
 <section>
-    <h4 class="mb-3">🕐 Letzte Ausführungen</h4>
+    <div class="d-flex align-items-center gap-3 mb-3">
+        <h4 class="mb-0">🕐 Letzte Ausführungen</h4>
+        <div class="form-check form-switch mb-0">
+            <input class="form-check-input" type="checkbox" name="hide_heartbeat"
+                   id="hide-heartbeat" value="1" {% if hide_heartbeat %}checked{% endif %}
+                   hx-get="{% url 'tasks_data' %}"
+                   hx-target="#tasks-content"
+                   hx-swap="innerHTML"
+                   hx-include="this">
+            <label class="form-check-label text-muted small" for="hide-heartbeat">Heartbeat ausblenden</label>
+        </div>
+    </div>
 
     {% if recent_results %}
     <div class="table-responsive">
@@ -140,10 +151,8 @@
                         {% endif %}
                     </td>
                     <td>
-                        {% if result.started_at and result.finished_at %}
-                            {% with duration=result.finished_at|timeuntil:result.started_at %}
-                                {{ duration }}
-                            {% endwith %}
+                        {% if result.duration_seconds %}
+                            {{ result.duration_seconds }}
                         {% else %}
                             <span class="text-muted">—</span>
                         {% endif %}
