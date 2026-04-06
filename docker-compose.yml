@@ -15,7 +15,6 @@ services:
       - DJANGO__ALLOWED_HOSTS=${DJANGO__ALLOWED_HOSTS}
       - PIHOLE_PRIMARY_PASSWORD=${PIHOLE_PRIMARY_PASSWORD}
       - PIHOLE_BACKUP_PASSWORD=${PIHOLE_BACKUP_PASSWORD}
-#      - PODCASTINDEX_API_SECRET=${PODCASTINDEX_API_SECRET}
       - OPENWEATHERMAP_API_KEY=${OPENWEATHERMAP_API_KEY}
       - GOOGLE_PRIVATE_KEY=${GOOGLE_PRIVATE_KEY}
       - GOOGLE_CLIENT_EMAIL=${GOOGLE_CLIENT_EMAIL}
@@ -32,13 +31,12 @@ services:
       - GARMIN_DB_USER=${GARMIN_DB_USER}
       - GARMIN_DB_PASSWORD=${GARMIN_DB_PASSWORD}
       - GARMIN_DB_NAME=${GARMIN_DB_NAME}
-
   murkel3-worker:
     image: ghcr.io/relativity74205/murkelhausen_app3/murkel_app3:1.9.0
     container_name: murkelhausen3-worker
     restart: always
     hostname: murkel3-worker
-    entrypoint: ["/app/entrypoint-worker.sh"]
+    entrypoint: ["/usr/app/entrypoint-worker.sh"]
     environment:
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
