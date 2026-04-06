@@ -9,7 +9,6 @@ class CoreConfig(AppConfig):
     name = "core"
 
     def ready(self) -> None:
-        # django-apscheduler only provides the job store; we start the scheduler here.
         # Skip all management commands (migrate, shell, etc.) — only run when serving.
         # For runserver, also skip the autoreload parent (ready() is called twice).
         is_manage_py = bool(sys.argv) and sys.argv[0].endswith("manage.py")
@@ -20,6 +19,7 @@ class CoreConfig(AppConfig):
         if is_runserver and os.environ.get("RUN_MAIN") != "true":
             return
 
-        from core import scheduler  # noqa: PLC0415
+        from core import scheduler, worker  # noqa: PLC0415
 
         scheduler.start()
+        worker.start()

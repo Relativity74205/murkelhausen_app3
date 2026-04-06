@@ -617,6 +617,8 @@ def tasks_data(request):
     from django_apscheduler.models import DjangoJob, DjangoJobExecution  # noqa: PLC0415
     from django_tasks_db.models import DBTaskResult  # noqa: PLC0415
 
+    from core import worker  # noqa: PLC0415
+
     jobs = []
     for job in DjangoJob.objects.all().order_by("id"):  # type: ignore[union-attr]
         last_exec = (
@@ -631,7 +633,11 @@ def tasks_data(request):
     return render(
         request,
         "core/tasks_content.html",
-        {"jobs": jobs, "recent_results": recent_results},
+        {
+            "jobs": jobs,
+            "recent_results": recent_results,
+            "worker_status": worker.get_status(),
+        },
     )
 
 
