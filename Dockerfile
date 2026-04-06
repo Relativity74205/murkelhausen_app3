@@ -17,7 +17,7 @@ WORKDIR /usr/app
 
 COPY family_intranet family_intranet
 COPY core core
-COPY entrypoint.sh manage.py pyproject.toml uv.lock* README.md ./
+COPY entrypoint.sh entrypoint-worker.sh manage.py pyproject.toml uv.lock* README.md ./
 
 RUN uv sync
 

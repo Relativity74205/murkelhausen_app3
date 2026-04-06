@@ -630,7 +630,8 @@ def tasks_data(request):
         jobs.append({"job": job, "last_execution": last_exec})
 
     recent_results = DBTaskResult.objects.exclude(
-        task_path=HEARTBEAT_TASK_PATH
+        # TODO(arkadius): readd
+        # task_path=HEARTBEAT_TASK_PATH
     ).order_by("-enqueued_at")[:20]
 
     return render(

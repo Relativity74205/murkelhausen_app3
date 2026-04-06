@@ -32,7 +32,6 @@ services:
       - GARMIN_DB_USER=${GARMIN_DB_USER}
       - GARMIN_DB_PASSWORD=${GARMIN_DB_PASSWORD}
       - GARMIN_DB_NAME=${GARMIN_DB_NAME}
-      - GARMIN_DB_SCHEMA=${GARMIN_DB_SCHEMA}
 
   murkel3-worker:
     image: ghcr.io/relativity74205/murkelhausen_app3/murkel_app3:1.8.1
@@ -53,4 +52,3 @@ services:
       - GARMIN_DB_USER=${GARMIN_DB_USER}
       - GARMIN_DB_PASSWORD=${GARMIN_DB_PASSWORD}
       - GARMIN_DB_NAME=${GARMIN_DB_NAME}
-      - GARMIN_DB_SCHEMA=${GARMIN_DB_SCHEMA}
