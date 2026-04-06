@@ -648,9 +648,11 @@ def tasks_data(request):
 def tasks_enqueue(request, job_id: str):  # noqa: ARG001
     """Enqueue a scheduled job immediately."""
     from family_intranet.jobs.garmin.runner import run_garmin_load  # noqa: PLC0415
+    from family_intranet.jobs.heartbeat import worker_heartbeat  # noqa: PLC0415
 
     enqueue_map = {
         "garmin_load": run_garmin_load,
+        "worker_heartbeat": worker_heartbeat,
     }
     task_fn = enqueue_map.get(job_id)
     if task_fn is None:
