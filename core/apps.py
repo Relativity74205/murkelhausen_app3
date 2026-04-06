@@ -1,7 +1,10 @@
+import logging
 import os
 import sys
 
 from django.apps import AppConfig
+
+logger = logging.getLogger(__name__)
 
 
 class CoreConfig(AppConfig):
@@ -24,7 +27,21 @@ class CoreConfig(AppConfig):
 
         setup_otel(instrument_django=not is_db_worker)
 
-        if not is_db_worker:
+        if is_db_worker:
+            from django.utils import timezone  # noqa: PLC0415
+            from django_tasks_db.models import DBTaskResult  # noqa: PLC0415
+
+            count = DBTaskResult.objects.filter(status="RUNNING").update(
+                status="FAILED",
+                finished_at=timezone.now(),
+                exception_class_path="",
+                traceback="Abgebrochen: Worker-Prozess wurde beendet",
+            )
+            if count:
+                logger.warning(
+                    "Marked %d abandoned task(s) as FAILED on worker startup", count
+                )
+        else:
             from core import scheduler  # noqa: PLC0415
 
             scheduler.start()
