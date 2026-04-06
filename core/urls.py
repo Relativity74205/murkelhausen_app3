@@ -28,4 +28,5 @@ urlpatterns = [
     path("tasks/", views.tasks, name="tasks"),
     path("tasks/data/", views.tasks_data, name="tasks_data"),
     path("tasks/<str:job_id>/enqueue/", views.tasks_enqueue, name="tasks_enqueue"),
+    path("tasks/<uuid:task_id>/delete/", views.tasks_delete, name="tasks_delete"),
 ]

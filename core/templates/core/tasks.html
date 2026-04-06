@@ -52,7 +52,9 @@
 <script>
     document.body.addEventListener('htmx:afterRequest', function (event) {
         const path = event.detail.pathInfo ? event.detail.pathInfo.requestPath : '';
-        if (!path.includes('/enqueue/')) {
+        const isEnqueue = path.includes('/enqueue/');
+        const isDelete = path.includes('/delete/');
+        if (!isEnqueue && !isDelete) {
             return;
         }
         const msgDiv = document.getElementById('enqueue-message');
@@ -61,11 +63,17 @@
         if (event.detail.successful) {
             const r = JSON.parse(event.detail.xhr.response);
             if (r.success) {
-                msgDiv.innerHTML = '<div class="alert alert-success alert-dismissible fade show" role="alert">' +
-                    '✅ Task eingereiht — ID: <code>' + r.task_id + '</code>' +
-                    '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>' +
-                    '</div>';
-                // Refresh task list after 1 second
+                if (isEnqueue) {
+                    msgDiv.innerHTML = '<div class="alert alert-success alert-dismissible fade show" role="alert">' +
+                        '✅ Task eingereiht — ID: <code>' + r.task_id + '</code>' +
+                        '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>' +
+                        '</div>';
+                } else {
+                    msgDiv.innerHTML = '<div class="alert alert-success alert-dismissible fade show" role="alert">' +
+                        '✅ Task gelöscht' +
+                        '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>' +
+                        '</div>';
+                }
                 setTimeout(function () {
                     htmx.trigger('#tasks-content', 'refresh');
                 }, 1000);

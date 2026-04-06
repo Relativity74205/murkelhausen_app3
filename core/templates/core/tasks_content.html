@@ -103,6 +103,7 @@
                     <th>Gestartet</th>
                     <th>Dauer</th>
                     <th>Fehler</th>
+                    <th>Aktion</th>
                 </tr>
             </thead>
             <tbody>
@@ -144,6 +145,21 @@
                             <span class="text-danger small" title="{{ result.traceback }}">
                                 {{ result.exception_class_path|slice:":60" }}
                             </span>
+                        {% else %}
+                            <span class="text-muted">—</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if result.status == "READY" %}
+                            <button
+                                class="btn btn-sm btn-outline-danger"
+                                hx-post="{% url 'tasks_delete' result.id %}"
+                                hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+                                hx-swap="none"
+                                title="Task löschen"
+                            >
+                                ✕
+                            </button>
                         {% else %}
                             <span class="text-muted">—</span>
                         {% endif %}

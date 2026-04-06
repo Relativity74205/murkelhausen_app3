@@ -663,6 +663,28 @@ def tasks_enqueue(request, job_id: str):  # noqa: ARG001
     return JsonResponse({"success": True, "task_id": str(result.id)})
 
 
+@require_POST
+def tasks_delete(request, task_id):  # noqa: ARG001
+    """Delete an enqueued task that hasn't started yet."""
+    from django_tasks_db.models import DBTaskResult  # noqa: PLC0415
+
+    try:
+        task_result = DBTaskResult.objects.get(id=task_id)
+    except DBTaskResult.DoesNotExist:
+        return JsonResponse(
+            {"success": False, "error": "Task nicht gefunden"}, status=404
+        )
+
+    if task_result.status != "READY":
+        return JsonResponse(
+            {"success": False, "error": "Nur wartende Tasks können gelöscht werden"},
+            status=400,
+        )
+
+    task_result.delete()
+    return JsonResponse({"success": True})
+
+
 def work_calendar(request):
     """Work calendar view - initial page load."""
     return render(request, "core/work_calendar.html")
