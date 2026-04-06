@@ -638,6 +638,7 @@ def tasks_data(request):
     from django_tasks_db.models import DBTaskResult  # noqa: PLC0415
 
     from core import worker  # noqa: PLC0415
+    from family_intranet.jobs.heartbeat import HEARTBEAT_TASK_PATH  # noqa: PLC0415
 
     jobs = []
     for job in DjangoJob.objects.all().order_by("id"):  # type: ignore[union-attr]
@@ -648,10 +649,11 @@ def tasks_data(request):
         )
         jobs.append({"job": job, "last_execution": last_exec})
 
-    recent_results = DBTaskResult.objects.exclude(
-        # TODO(arkadius): readd
-        # task_path=HEARTBEAT_TASK_PATH  # noqa: ERA001
-    ).order_by("-enqueued_at")[:20]
+    hide_heartbeat = request.GET.get("hide_heartbeat") == "1"
+    qs = DBTaskResult.objects.all()
+    if hide_heartbeat:
+        qs = qs.exclude(task_path=HEARTBEAT_TASK_PATH)
+    recent_results = qs.order_by("-enqueued_at")[:20]
 
     return render(
         request,
@@ -660,6 +662,7 @@ def tasks_data(request):
             "jobs": jobs,
             "recent_results": recent_results,
             "worker_status": worker.get_status(),
+            "hide_heartbeat": hide_heartbeat,
         },
     )
 
@@ -695,9 +698,12 @@ def tasks_delete(request, task_id):  # noqa: ARG001
             {"success": False, "error": "Task nicht gefunden"}, status=404
         )
 
-    if task_result.status != "READY":
+    if task_result.status not in ("READY", "FAILED"):
         return JsonResponse(
-            {"success": False, "error": "Nur wartende Tasks können gelöscht werden"},
+            {
+                "success": False,
+                "error": "Nur wartende oder fehlgeschlagene Tasks können gelöscht werden",  # noqa: E501
+            },
             status=400,
         )
 

@@ -11,7 +11,8 @@ def get_garmin_client() -> Garmin:
     try:
         garmin.login(settings.GARMIN_AUTH_TOKEN_PATH)
     except FileNotFoundError:
+        sleep(10)
         get_auth_token()
-        sleep(2)
+        sleep(10)
         garmin.login(settings.GARMIN_AUTH_TOKEN_PATH)
     return garmin

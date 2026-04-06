@@ -5,10 +5,6 @@
 {% block nav_weather %}active{% endblock %}
 
 {% block extra_css %}
-<!-- Highcharts for charts -->
-<script src="https://code.highcharts.com/highcharts.js"></script>
-<script src="https://code.highcharts.com/highcharts-more.js"></script>
-
 <style>
     .weather-icon {
         width: 50px;
@@ -351,12 +347,18 @@
         {% endif %}
     </div>
 
-    {% if not error and weather %}
-    {% load l10n %}
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            // Rain color function (shared across all charts)
-            function getRainColor(rain) {
+{% endblock %}
+
+{% block extra_js %}
+{% load static %}
+<!-- Highcharts for charts -->
+<script src="{% static 'core/highcharts.js' %}"></script>
+<script src="{% static 'core/highcharts-more.js' %}"></script>
+
+{% if not error and weather %}
+{% load l10n %}
+<script>
+    function getRainColor(rain) {
                 if (rain >= 50) {  // sehr starker Regen
                     return "rgba(255,50,50,0.9)";
                 } else if (rain >= 10) {  // starker Regen
@@ -641,7 +643,6 @@
                     verticalAlign: 'bottom'
                 }
             });
-        });
     </script>
     {% endif %}
 {% endblock %}

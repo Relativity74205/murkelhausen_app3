@@ -30,12 +30,22 @@
     <!-- Message area for enqueue feedback -->
     <div class="container mt-3">
         <div id="enqueue-message"></div>
+        <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" name="hide_heartbeat"
+                   id="hide-heartbeat" value="1" checked
+                   hx-get="{% url 'tasks_data' %}"
+                   hx-target="#tasks-content"
+                   hx-swap="innerHTML"
+                   hx-include="this">
+            <label class="form-check-label text-muted" for="hide-heartbeat">Heartbeat ausblenden</label>
+        </div>
     </div>
 
     <!-- Main Content -->
     <div class="container my-4" id="tasks-content"
          hx-get="{% url 'tasks_data' %}"
          hx-trigger="load, refresh, every {{ TASKS_REFRESH_INTERVAL }}s"
+         hx-include="#hide-heartbeat"
          hx-swap="innerHTML">
         <!-- Loading Placeholder -->
         <div class="text-center py-5">
