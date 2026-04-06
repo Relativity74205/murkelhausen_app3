@@ -165,6 +165,9 @@ GARMIN_DB_SCHEMA = os.environ.get("GARMIN_DB_SCHEMA", "data")
 # HTMX timeout in milliseconds (default: 30 seconds)
 HTMX_TIMEOUT = int(os.environ.get("HTMX_TIMEOUT", "10000"))
 
+# Tasks page auto-refresh interval in seconds (default: 10)
+TASKS_REFRESH_INTERVAL = int(os.environ.get("TASKS_REFRESH_INTERVAL", "10"))
+
 
 class GoogleCalendarSettings(BaseModel):
     api_key: str

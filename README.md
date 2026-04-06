@@ -43,3 +43,6 @@ uv run python manage.py enqueue_garmin_load
 - [ ] create historization of weather data
 - [ ] power data
 - [ ] beowulf, pi-holes performance data
+- [ ] handle aborted tasks, that is tasks which have been deleted hard
+- [ ] only one task of a type shall be allowed to run in parallel
+- [ ] make runs abortable

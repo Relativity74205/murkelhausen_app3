@@ -35,7 +35,7 @@
     <!-- Main Content -->
     <div class="container my-4" id="tasks-content"
          hx-get="{% url 'tasks_data' %}"
-         hx-trigger="load, refresh"
+         hx-trigger="load, refresh, every {{ TASKS_REFRESH_INTERVAL }}s"
          hx-swap="innerHTML">
         <!-- Loading Placeholder -->
         <div class="text-center py-5">

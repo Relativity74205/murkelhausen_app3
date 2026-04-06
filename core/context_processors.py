@@ -5,4 +5,7 @@ from django.conf import settings
 
 def htmx_timeout(request):  # noqa: ARG001
     """Add HTMX_TIMEOUT to all template contexts."""
-    return {"HTMX_TIMEOUT": settings.HTMX_TIMEOUT}
+    return {
+        "HTMX_TIMEOUT": settings.HTMX_TIMEOUT,
+        "TASKS_REFRESH_INTERVAL": settings.TASKS_REFRESH_INTERVAL,
+    }
