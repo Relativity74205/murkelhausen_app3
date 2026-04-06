@@ -1,4 +1,5 @@
 import logging
+import time
 import traceback
 from datetime import UTC, date, datetime
 
@@ -7,8 +8,25 @@ from django.tasks import task
 from sqlalchemy.orm import Session
 
 from family_intranet.jobs.garmin import client, db, loaders, models
+from family_intranet.otel import METRIC_PREFIX, get_meter
 
 logger = logging.getLogger(__name__)
+
+_meter = get_meter("garmin")
+_job_duration = _meter.create_histogram(
+    f"{METRIC_PREFIX}.garmin.job.duration",
+    unit="s",
+    description="Total Garmin load job duration",
+)
+_job_runs = _meter.create_counter(
+    f"{METRIC_PREFIX}.garmin.job.runs",
+    description="Number of Garmin load job executions",
+)
+_loader_rows = _meter.create_counter(
+    f"{METRIC_PREFIX}.garmin.loader.rows_saved",
+    unit="rows",
+    description="Rows saved per Garmin loader call",
+)
 
 
 def _get_last_successful_run_date() -> date:
@@ -51,35 +69,59 @@ def run_garmin_load() -> None:
         data_to_date=end_date,
     )
 
+    job_start = time.perf_counter()
     try:
         garmin_client = client.get_garmin_client()
         for day_offset in range((end_date - start_date).days + 1):
             measure_date = start_date + relativedelta(days=day_offset)
-            loaders.get_heartrate_data(
-                measure_date=measure_date, garmin_client=garmin_client
+            _loader_rows.add(
+                loaders.get_heartrate_data(
+                    measure_date=measure_date, garmin_client=garmin_client
+                ),
+                {"loader": "heartrate"},
             )
-            loaders.get_steps_data(
-                measure_date=measure_date, garmin_client=garmin_client
+            _loader_rows.add(
+                loaders.get_steps_data(
+                    measure_date=measure_date, garmin_client=garmin_client
+                ),
+                {"loader": "steps"},
             )
-            loaders.get_daily_steps_data(
-                measure_date=measure_date, garmin_client=garmin_client
+            _loader_rows.add(
+                loaders.get_daily_steps_data(
+                    measure_date=measure_date, garmin_client=garmin_client
+                ),
+                {"loader": "daily_steps"},
             )
-            loaders.get_floors_data(
-                measure_date=measure_date, garmin_client=garmin_client
+            _loader_rows.add(
+                loaders.get_floors_data(
+                    measure_date=measure_date, garmin_client=garmin_client
+                ),
+                {"loader": "floors"},
             )
-            loaders.get_stress_data(
-                measure_date=measure_date, garmin_client=garmin_client
+            _loader_rows.add(
+                loaders.get_stress_data(
+                    measure_date=measure_date, garmin_client=garmin_client
+                ),
+                {"loader": "stress"},
             )
-            loaders.get_body_battery_data(
-                measure_date=measure_date, garmin_client=garmin_client
+            _loader_rows.add(
+                loaders.get_body_battery_data(
+                    measure_date=measure_date, garmin_client=garmin_client
+                ),
+                {"loader": "body_battery"},
             )
-            loaders.get_sleep_data(
-                measure_date=measure_date, garmin_client=garmin_client
+            _loader_rows.add(
+                loaders.get_sleep_data(
+                    measure_date=measure_date, garmin_client=garmin_client
+                ),
+                {"loader": "sleep"},
             )
 
         run_record.success = True
         run_record.finished_at = datetime.now(tz=UTC)
         db.save_objects((run_record,), upsert=False)
+        _job_runs.add(1, {"status": "success"})
+        _job_duration.record(time.perf_counter() - job_start)
         logger.info("Garmin load completed successfully.")
     except Exception:
         run_record.success = False
@@ -87,4 +129,6 @@ def run_garmin_load() -> None:
         run_record.error_message = traceback.format_exc()
         logger.exception("Garmin load failed.")
         db.save_objects((run_record,), upsert=False)
+        _job_runs.add(1, {"status": "failed"})
+        _job_duration.record(time.perf_counter() - job_start)
         raise

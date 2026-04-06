@@ -9,6 +9,7 @@ from django.shortcuts import render
 from django.views.decorators.http import require_POST
 from gcsa.event import Event
 
+from family_intranet.otel import METRIC_PREFIX, get_meter, timed_repository_call
 from family_intranet.repositories.fussballde import (
     get_e2_junioren_home_url,
     get_erik_e2_junioren_next_games,
@@ -44,6 +45,16 @@ from family_intranet.repositories.pihole import MultiPiHoleRepository
 from family_intranet.repositories.pushover import PushoverRepository
 from family_intranet.settings import GOOGLE_CALENDAR_SETTINGS, OUTLOOK_CALENDAR_URL
 
+_meter = get_meter("core")
+_calendar_events_fetched = _meter.create_counter(
+    f"{METRIC_PREFIX}.calendar.events.fetched",
+    description="Number of Google Calendar events fetched per request",
+)
+_pihole_disable_calls = _meter.create_counter(
+    f"{METRIC_PREFIX}.pihole.disable.calls",
+    description="Number of Pi-hole disable requests",
+)
+
 
 def home(request):
     return render(request, "core/home.html")
@@ -57,12 +68,13 @@ def handball_games(request):
 def handball_games_data(request):
     # Async data loading for HTMX
     try:
-        d_jugend_games = get_djk_saarn_d_jugend()
-        erste_herren_games = get_djk_saarn_erste_herren()
-        d_jugend_url = get_d_jugend_url()
-        d_jugend_gruppe_url = get_d_jugend_gruppe_url()
-        erste_herren_url = get_erste_herren()
-        erste_herren_gruppe_url = get_erste_herren_gruppe_url()
+        with timed_repository_call("handballnordrhein"):
+            d_jugend_games = get_djk_saarn_d_jugend()
+            erste_herren_games = get_djk_saarn_erste_herren()
+            d_jugend_url = get_d_jugend_url()
+            d_jugend_gruppe_url = get_d_jugend_gruppe_url()
+            erste_herren_url = get_erste_herren()
+            erste_herren_gruppe_url = get_erste_herren_gruppe_url()
 
         context = {
             "d_jugend_games": d_jugend_games,
@@ -86,10 +98,11 @@ def football_games(request):
 def football_games_data(request):
     # Async data loading for HTMX
     try:
-        e2_junioren_games = get_erik_e2_junioren_next_games()
-        speldorf_home_games = get_speldorf_next_home_games()
-        e2_junioren_url = get_e2_junioren_home_url()
-        vfb_speldorf_url = get_vfb_speldorf_home_url()
+        with timed_repository_call("fussballde"):
+            e2_junioren_games = get_erik_e2_junioren_next_games()
+            speldorf_home_games = get_speldorf_next_home_games()
+            e2_junioren_url = get_e2_junioren_home_url()
+            vfb_speldorf_url = get_vfb_speldorf_home_url()
 
         context = {
             "e2_junioren_games": e2_junioren_games,
@@ -111,8 +124,9 @@ def muelltermine(request):
 def muelltermine_data(request):
     # Async data loading for HTMX
     try:
-        termine = get_muelltermine_for_home()
-        wertstoffhof = get_wertstoffhof_oeffnungszeiten()
+        with timed_repository_call("mheg"):
+            termine = get_muelltermine_for_home()
+            wertstoffhof = get_wertstoffhof_oeffnungszeiten()
         context = {"termine": termine, "wertstoffhof": wertstoffhof}
         return render(request, "core/muelltermine_content.html", context)
     except (ConnectionError, TimeoutError, ValueError) as e:
@@ -129,7 +143,8 @@ def vertretungsplan_data(request):
     # Async data loading for HTMX
     try:
         # Get available dates
-        available_dates = get_vertretungsplan_dates()
+        with timed_repository_call("gymbroich"):
+            available_dates = get_vertretungsplan_dates()
 
         # Get the selected date from query params, default to first available date
         selected_date_str = request.GET.get("date")
@@ -145,8 +160,9 @@ def vertretungsplan_data(request):
         vertretungsplan_mattis = None
         vertretungsplan_full = None
         if selected_date:
-            vertretungsplan_mattis = get_vertretungsplan_mattis(selected_date)
-            vertretungsplan_full = get_vertretungsplan(selected_date)
+            with timed_repository_call("gymbroich"):
+                vertretungsplan_mattis = get_vertretungsplan_mattis(selected_date)
+                vertretungsplan_full = get_vertretungsplan(selected_date)
 
         context = {
             "available_dates": available_dates,
@@ -187,6 +203,7 @@ def pihole_disable(request):  # noqa: ARG001
     logger = logging.getLogger(__name__)
 
     try:
+        _pihole_disable_calls.add(1)
         repo = MultiPiHoleRepository()
         logger.info("Attempting to disable Pi-hole blocking on all servers")
         status = repo.disable_blocking(duration_seconds=300)  # 5 minutes
@@ -220,7 +237,8 @@ def pushover_send(request):  # noqa: ARG001
 
 def weather(request):
     try:
-        weather_data, error = get_weather_data_muelheim()
+        with timed_repository_call("owm"):
+            weather_data, error = get_weather_data_muelheim()
         context = {"error": error} if error else {"weather": weather_data}
         return render(request, "core/weather.html", context)
     except (ConnectionError, TimeoutError, ValueError) as e:
@@ -271,6 +289,8 @@ def calendar_data(request):
                         f"Error fetching calendar '{calendar_name}': {e}",
                         exc_info=True,
                     )
+
+        _calendar_events_fetched.add(len(all_appointments))
 
         # Sort all appointments by start timestamp
         all_appointments.sort(key=lambda x: x.start_timestamp)
@@ -618,7 +638,6 @@ def tasks_data(request):
     from django_tasks_db.models import DBTaskResult  # noqa: PLC0415
 
     from core import worker  # noqa: PLC0415
-    from family_intranet.jobs.heartbeat import HEARTBEAT_TASK_PATH  # noqa: PLC0415
 
     jobs = []
     for job in DjangoJob.objects.all().order_by("id"):  # type: ignore[union-attr]
@@ -631,7 +650,7 @@ def tasks_data(request):
 
     recent_results = DBTaskResult.objects.exclude(
         # TODO(arkadius): readd
-        # task_path=HEARTBEAT_TASK_PATH
+        # task_path=HEARTBEAT_TASK_PATH  # noqa: ERA001
     ).order_by("-enqueued_at")[:20]
 
     return render(
@@ -700,9 +719,10 @@ def work_calendar_data(request):
         logger.info(f"Work calendar data requested for {days_to_show} days")
 
         # Fetch work appointments from Outlook ICS calendar
-        appointments = fetch_work_calendar(
-            OUTLOOK_CALENDAR_URL, days_ahead=days_to_show
-        )
+        with timed_repository_call("outlook_calendar"):
+            appointments = fetch_work_calendar(
+                OUTLOOK_CALENDAR_URL, days_ahead=days_to_show
+            )
 
         # Group appointments by date for better display
         appointments_by_date = defaultdict(list)
